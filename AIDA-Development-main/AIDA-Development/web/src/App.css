@@ -1,0 +1,13 @@
+#root {
+  --gray: #CCCCCCFF;
+}
+
+/* For Tailwind users, use className or extend your config */
+.scrollbar-hidden {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}

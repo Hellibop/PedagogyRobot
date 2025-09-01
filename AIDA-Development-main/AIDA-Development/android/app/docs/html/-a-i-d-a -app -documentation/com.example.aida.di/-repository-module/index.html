@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>RepositoryModule</title>
+    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<link href="../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../ui-kit/ui-kit.min.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+    <div class="root">
+    <nav class="navigation theme-dark" id="navigation-wrapper">
+            <a class="library-name--link" href="../../../index.html">
+                    AIDA App Documentation
+            </a>
+        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle"
+                type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">
+        </div>
+        <div class="navigation-controls">
+        <div class="filter-section filter-section_loading" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active=""
+                        data-filter=":app/release">androidJvm</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox"
+                        data-role="dropdown-toggle"
+                        aria-controls="platform-tags-listbox"
+                        aria-haspopup="listbox"
+                        aria-expanded="false"
+                        aria-label="Toggle source sets"
+                ></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox">
+                    <div class="dropdown--header"><span>Platform filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close platform filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":app/release"
+                                       data-filter=":app/release"/>
+                                <span class="checkbox--icon"></span>
+                                androidJvm
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </div>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button"
+                    type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                    <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list"
+                        data-role="dropdown-listbox">
+                        <div class="dropdown--header">
+                            <span>
+                                    AIDA App Documentation
+                            </span>
+                            <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                                <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                            </button>
+                        </div>
+                        <div class="sidebar--inner" id="sideMenu"></div>
+                    </ul>
+                    <div class="dropdown--overlay"></div>
+                </div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="AIDA App Documentation::com.example.aida.di/RepositoryModule///PointingToDeclaration//1259010394">
+  <div class="breadcrumbs"><a href="../../../index.html">AIDA App Documentation</a><span class="delimiter">/</span><a href="../index.html">com.example.aida.di</a><span class="delimiter">/</span><span class="current">RepositoryModule</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Repository</span><wbr></wbr><span><span>Module</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><span data-unresolved-link="dagger/Module///PointingToDeclaration/"><span class="token annotation builtin">Module</span></span></div></div><span class="token keyword">abstract </span><span class="token keyword">class </span><a href="index.html">RepositoryModule</a></div><p class="paragraph">Dagger Hilt module for providing repository dependencies. This module is responsible for binding repository implementations to their respective interfaces, making them available for injection throughout the application as singletons.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="-1690294912%2FConstructors%2F1259010394" anchor-label="RepositoryModule" id="-1690294912%2FConstructors%2F1259010394" data-filterable-set=":app/release"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":app/release" data-filterable-set=":app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-repository-module.html"><span>Repository</span><wbr></wbr><span><span>Module</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1690294912%2FConstructors%2F1259010394"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":app/release"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-128338697%2FFunctions%2F1259010394" anchor-label="bindManualControlRepository" id="-128338697%2FFunctions%2F1259010394" data-filterable-set=":app/release"></a>
+          <div class="table-row" data-filterable-current=":app/release" data-filterable-set=":app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bind-manual-control-repository.html"><span>bind</span><wbr></wbr><span>Manual</span><wbr></wbr><span>Control</span><wbr></wbr><span><span>Repository</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-128338697%2FFunctions%2F1259010394"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><span data-unresolved-link="dagger/Binds///PointingToDeclaration/"><span class="token annotation builtin">Binds</span></span></div><div class="block"><span class="token annotation builtin">@</span><span data-unresolved-link="javax.inject/Singleton///PointingToDeclaration/"><span class="token annotation builtin">Singleton</span></span></div></div><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="bind-manual-control-repository.html"><span class="token function">bindManualControlRepository</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">impl<span class="token operator">: </span><a href="../../com.example.aida.data.repository/-manual-control-repository-impl/index.html">ManualControlRepositoryImpl</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../com.example.aida.domain.repository/-manual-control-repository/index.html">ManualControlRepository</a></div><div class="brief "><p class="paragraph">Binds the <a href="../../com.example.aida.data.repository/-manual-control-repository-impl/index.html">ManualControlRepositoryImpl</a> implementation to the <a href="../../com.example.aida.domain.repository/-manual-control-repository/index.html">ManualControlRepository</a> interface. This allows for injecting <a href="../../com.example.aida.domain.repository/-manual-control-repository/index.html">ManualControlRepository</a> where needed, with Hilt providing the <a href="../../com.example.aida.data.repository/-manual-control-repository-impl/index.html">ManualControlRepositoryImpl</a> instance.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1694269969%2FFunctions%2F1259010394" anchor-label="bindSequenceRepository" id="1694269969%2FFunctions%2F1259010394" data-filterable-set=":app/release"></a>
+          <div class="table-row" data-filterable-current=":app/release" data-filterable-set=":app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bind-sequence-repository.html"><span>bind</span><wbr></wbr><span>Sequence</span><wbr></wbr><span><span>Repository</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1694269969%2FFunctions%2F1259010394"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><span data-unresolved-link="dagger/Binds///PointingToDeclaration/"><span class="token annotation builtin">Binds</span></span></div><div class="block"><span class="token annotation builtin">@</span><span data-unresolved-link="javax.inject/Singleton///PointingToDeclaration/"><span class="token annotation builtin">Singleton</span></span></div></div><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="bind-sequence-repository.html"><span class="token function">bindSequenceRepository</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">impl<span class="token operator">: </span><a href="../../com.example.aida.data.repository/-sequence-repository-impl/index.html">SequenceRepositoryImpl</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../com.example.aida.domain.repository/-sequence-repository/index.html">SequenceRepository</a></div><div class="brief "><p class="paragraph">Binds the <a href="../../com.example.aida.data.repository/-sequence-repository-impl/index.html">SequenceRepositoryImpl</a> implementation to the <a href="../../com.example.aida.domain.repository/-sequence-repository/index.html">SequenceRepository</a> interface. This allows for injecting <a href="../../com.example.aida.domain.repository/-sequence-repository/index.html">SequenceRepository</a> where needed, with Hilt providing the <a href="../../com.example.aida.data.repository/-sequence-repository-impl/index.html">SequenceRepositoryImpl</a> instance.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1002376037%2FFunctions%2F1259010394" anchor-label="bindSettingsRepository" id="1002376037%2FFunctions%2F1259010394" data-filterable-set=":app/release"></a>
+          <div class="table-row" data-filterable-current=":app/release" data-filterable-set=":app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bind-settings-repository.html"><span>bind</span><wbr></wbr><span>Settings</span><wbr></wbr><span><span>Repository</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1002376037%2FFunctions%2F1259010394"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><span data-unresolved-link="dagger/Binds///PointingToDeclaration/"><span class="token annotation builtin">Binds</span></span></div><div class="block"><span class="token annotation builtin">@</span><span data-unresolved-link="javax.inject/Singleton///PointingToDeclaration/"><span class="token annotation builtin">Singleton</span></span></div></div><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="bind-settings-repository.html"><span class="token function">bindSettingsRepository</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">impl<span class="token operator">: </span><a href="../../com.example.aida.data.repository/-app-prefs-repository-impl/index.html">AppPrefsRepositoryImpl</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../com.example.aida.domain.repository/-app-prefs-repository/index.html">AppPrefsRepository</a></div><div class="brief "><p class="paragraph">Binds the <a href="../../com.example.aida.data.repository/-app-prefs-repository-impl/index.html">AppPrefsRepositoryImpl</a> implementation to the <a href="../../com.example.aida.domain.repository/-app-prefs-repository/index.html">AppPrefsRepository</a> interface. This allows for injecting <a href="../../com.example.aida.domain.repository/-app-prefs-repository/index.html">AppPrefsRepository</a> where needed, with Hilt providing the <a href="../../com.example.aida.data.repository/-app-prefs-repository-impl/index.html">AppPrefsRepositoryImpl</a> instance.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-338780943%2FFunctions%2F1259010394" anchor-label="bindTopBarRepository" id="-338780943%2FFunctions%2F1259010394" data-filterable-set=":app/release"></a>
+          <div class="table-row" data-filterable-current=":app/release" data-filterable-set=":app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bind-top-bar-repository.html"><span>bind</span><wbr></wbr><span>Top</span><wbr></wbr><span>Bar</span><wbr></wbr><span><span>Repository</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-338780943%2FFunctions%2F1259010394"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><span data-unresolved-link="dagger/Binds///PointingToDeclaration/"><span class="token annotation builtin">Binds</span></span></div><div class="block"><span class="token annotation builtin">@</span><span data-unresolved-link="javax.inject/Singleton///PointingToDeclaration/"><span class="token annotation builtin">Singleton</span></span></div></div><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="bind-top-bar-repository.html"><span class="token function">bindTopBarRepository</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">impl<span class="token operator">: </span><a href="../../com.example.aida.data.repository/-top-bar-repository-impl/index.html">TopBarRepositoryImpl</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../com.example.aida.domain.repository/-top-bar-repository/index.html">TopBarRepository</a></div><div class="brief "><p class="paragraph">Binds the <a href="../../com.example.aida.data.repository/-top-bar-repository-impl/index.html">TopBarRepositoryImpl</a> implementation to the <a href="../../com.example.aida.domain.repository/-top-bar-repository/index.html">TopBarRepository</a> interface. This allows for injecting <a href="../../com.example.aida.domain.repository/-top-bar-repository/index.html">TopBarRepository</a> where needed, with Hilt providing the <a href="../../com.example.aida.data.repository/-top-bar-repository-impl/index.html">TopBarRepositoryImpl</a> instance.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1298120094%2FFunctions%2F1259010394" anchor-label="bindTopConnectionRepository" id="1298120094%2FFunctions%2F1259010394" data-filterable-set=":app/release"></a>
+          <div class="table-row" data-filterable-current=":app/release" data-filterable-set=":app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bind-top-connection-repository.html"><span>bind</span><wbr></wbr><span>Top</span><wbr></wbr><span>Connection</span><wbr></wbr><span><span>Repository</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1298120094%2FFunctions%2F1259010394"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><span data-unresolved-link="dagger/Binds///PointingToDeclaration/"><span class="token annotation builtin">Binds</span></span></div><div class="block"><span class="token annotation builtin">@</span><span data-unresolved-link="javax.inject/Singleton///PointingToDeclaration/"><span class="token annotation builtin">Singleton</span></span></div></div><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="bind-top-connection-repository.html"><span class="token function">bindTopConnectionRepository</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">impl<span class="token operator">: </span><a href="../../com.example.aida.data.repository/-connection-repository-impl/index.html">ConnectionRepositoryImpl</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../com.example.aida.domain.repository/-connection-repository/index.html">ConnectionRepository</a></div><div class="brief "><p class="paragraph">Binds the <a href="../../com.example.aida.data.repository/-connection-repository-impl/index.html">ConnectionRepositoryImpl</a> implementation to the <a href="../../com.example.aida.domain.repository/-connection-repository/index.html">ConnectionRepository</a> interface. This allows for injecting <a href="../../com.example.aida.domain.repository/-connection-repository/index.html">ConnectionRepository</a> where needed, with Hilt providing the <a href="../../com.example.aida.data.repository/-connection-repository-impl/index.html">ConnectionRepositoryImpl</a> instance.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+        <span>© 2025 Copyright</span>
+        <span class="pull-right">
+            <span>Generated by </span>
+            <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                <span>dokka</span>
+            </a>
+        </span>
+    </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

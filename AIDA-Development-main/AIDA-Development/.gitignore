@@ -1,0 +1,52 @@
+# Gradle files
+.gradle/
+build/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+android/.gradle/
+
+# Local configuration file (SDK path, etc.)
+local.properties
+
+# Log and OS Files
+*.log
+
+# Android Studio generated files and folders
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.ap_
+*.so
+*.a
+*.o
+output.json
+
+# IntelliJ / Android Studio
+android/.idea/
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+workspace.xml
+gradle.xml
+tasks.xml
+
+# VS Code (if used)
+.vscode/
+
+# Keystore files (Security)
+*.jks
+*.keystore
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
+
+# Android Profiling
+*.hprof
+
+# Additional dependency cache directories
+/captures/
+/outputs/
+/.cache/

@@ -1,0 +1,19 @@
+syntax ="proto3";
+
+option java_package = "com.example.aida.datastore.generated";
+option java_multiple_files = true;
+
+message SettingsProto {
+  string ip = 1;
+  int32 port = 2;
+}
+
+message RobotActionProto {
+  int32 type = 1;
+  string data = 2;
+}
+
+message AppPreferences{
+  SettingsProto current_settings = 1;
+  repeated RobotActionProto sequence = 2;
+}
