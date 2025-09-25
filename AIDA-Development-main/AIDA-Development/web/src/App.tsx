@@ -34,6 +34,9 @@ function App() {
   const playing = useActionStore(state => state.playing);
 
   // NEW: selectors from store for drag handling
+  //to specify for future developers, the NEW comments are new things which was needed to be able to drag into sequence,
+  //whilst existing/old was the behaviour that existed before drag was implemented, if you wish to change so you have only drag or 
+  //perhaps make it so drag inside is more "clean" you may want to change the code which has existing/old logic comments as those are the relevant parts
   const actions = useActionStore(s => s.actions);
   const addAction = useActionStore(s => s.addAction);
   const moveAction = useActionStore(s => s.moveAction);
@@ -45,7 +48,7 @@ function App() {
 
     const data = active?.data?.current as any;
 
-    // --- Dragging in from the grid ---
+    //  Dragging in from the grid 
     if (data?.source === 'grid' && data?.action) {
       // Default to append if we didn't drop over a specific item
       let insertIndex = actions.length;
@@ -58,7 +61,7 @@ function App() {
         }
       }
 
-      // 1) append to end (your existing behavior)
+      // 1) append to end (the previous existing behavior)
       const preLength = useActionStore.getState().actions.length;
       addAction(data.action);
 
@@ -75,7 +78,7 @@ function App() {
       return;
     }
 
-    // --- Reordering inside the sequence (existing logic) ---
+    //  Reordering inside the sequence (existing/old logic) 
     if (over && active?.id !== over.id) {
       const from = actions.findIndex(a => a.uid === active.id);
       const to = actions.findIndex(a => a.uid === over.id);
