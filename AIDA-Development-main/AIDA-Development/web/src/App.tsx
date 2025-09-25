@@ -9,7 +9,8 @@ import { ActionBlockSeqList } from './components/SequenceBar';
 import { useActionStore } from './actionStore';
 import { loadActionsFromStorage } from './dataclasses/Loader';
 import { QrPopup } from './parser_qr/QrPopup';
-
+// NEW:
+import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 
 useActionStore.getState().actions = loadActionsFromStorage()
 
@@ -32,35 +33,85 @@ function App() {
 
   const playing = useActionStore(state => state.playing);
 
-  return (
-    <div className={`${playing ? 'bg-gray-400' : 'bg-white'} flex flex-col h-screen`}>
-      <div className='flex items-center h-1/2'>
-        <ActionBlockSeqList />
-        <div className="absolute h-1/2 left-1/2 transform -translate-x-1/2 w-40 bg-green-400 z-0"></div>
+  // NEW: selectors from store for drag handling
+  const actions = useActionStore(s => s.actions);
+  const addAction = useActionStore(s => s.addAction);
+  const moveAction = useActionStore(s => s.moveAction);
+  const stop = useActionStore(s => s.stop);
 
-      </div >
-      {/** Export Button */}
-      <div className="absolute top-3 right-3 z-1000">
-        <QrPopup />
+  // NEW: single drag-end handler for the whole workspace
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    stop?.();
+
+    const data = active?.data?.current as any;
+
+    // --- Dragging in from the grid ---
+    if (data?.source === 'grid' && data?.action) {
+      // Default to append if we didn't drop over a specific item
+      let insertIndex = actions.length;
+
+      // If we dropped over a specific sequence item, insert BEFORE that item
+      if (over && over.id !== 'sequence-bar-drop') {
+        const overIndex = actions.findIndex(a => a.uid === over.id);
+        if (overIndex !== -1) {
+          insertIndex = overIndex; // insert before the hovered item
+        }
+      }
+
+      // 1) append to end (your existing behavior)
+      const preLength = useActionStore.getState().actions.length;
+      addAction(data.action);
+
+      // 2) then move the newly appended item into the target slot
+      //    (wait a frame so the appended item exists in state)
+      requestAnimationFrame(() => {
+        const { actions: latest, moveAction } = useActionStore.getState();
+        const newIndex = latest.length - 1; // appended at the end
+        if (insertIndex < newIndex) {
+          moveAction(newIndex, insertIndex);
+        }
+      });
+
+      return;
+    }
+
+    // --- Reordering inside the sequence (existing logic) ---
+    if (over && active?.id !== over.id) {
+      const from = actions.findIndex(a => a.uid === active.id);
+      const to = actions.findIndex(a => a.uid === over.id);
+      if (from !== -1 && to !== -1) {
+        moveAction(from, to);
+      }
+    }
+  };
+  return (
+    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <div className={`${playing ? 'bg-gray-400' : 'bg-white'} flex flex-col h-screen`}>
+        <div className='flex items-center h-1/2'>
+          <ActionBlockSeqList />
+          <div className="absolute h-1/2 left-1/2 transform -translate-x-1/2 w-40 bg-green-400 z-0"></div>
+        </div>
+
+        {/* Export / Clear */}
+        <div className="absolute top-3 right-3 z-1000">
+          <QrPopup />
+        </div>
+        <div className="absolute top-3 left-3 z-1000">
+          <ClearButton />
+        </div>
+
+        {/* The grid is likely rendered inside Footer; that's fine—it's inside the same DndContext */}
+        <div className='h-1/2 w-screen'>
+          <Footer addBlock={addBlock} />
+        </div>
       </div>
-      <div className="absolute top-3 left-3 z-1000">
-        <ClearButton />
-      </div>
-      <div className='absolute top-3 justify-center flex align-center w-screen'>
-      </div>
-      <div className='h-1/2 w-screen'>
-        <Footer addBlock={addBlock} />
-      </div>
-    </div>
+    </DndContext>
   )
 }
 
-window.addEventListener("beforeunload", (event) => {
-  const state = useActionStore.getState(); // get the latest state from your Zustand store
-
-  // Save actions to localStorage
+window.addEventListener("beforeunload", () => {
+  const state = useActionStore.getState();
   localStorage.setItem("action-list", JSON.stringify(state.actions));
-
 });
 
 export default App;

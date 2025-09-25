@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import CustomScrollbar from "./CustomScrollbar";
-import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
+import { DndContext, closestCenter, DragEndEvent, useDroppable } from '@dnd-kit/core';
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { useActionStore } from '../actionStore';
 import { restrictToHorizontalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
@@ -19,6 +19,7 @@ import { useDragScroll } from './hooks/useDragScroll';
  * - Background dragging to scroll (only when not interacting with items).
  * - Smooth scroll snapping.
  * - Custom scrollbar overlay.
+ * - Accepts drag-in from grid (MovementActionsGrid), adds at end.
  * 
  * @returns {JSX.Element} Rendered ActionBlockSeqList component.
  */
@@ -28,6 +29,8 @@ export function ActionBlockSeqList() {
   const moveAction = useActionStore(state => state.moveAction);
   const stop = useActionStore(state => state.stop);
   const setScrollRef = useActionStore(state => state.setScrollRef);
+  // For adding a new action at the end
+  const addAction = useActionStore(state => state.addAction);
 
   // Ref to the scrollable container
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -49,67 +52,93 @@ export function ActionBlockSeqList() {
     }
   }, [setScrollRef]);
 
+  // Add a drop zone around the actions area for grid-to-sequence drag-in
+  const { setNodeRef: setDropZoneRef, isOver: isGridDropOver } = useDroppable({
+    id: "sequence-bar-drop",
+  });
+
   /**
    * Handles the logic for when a drag operation ends.
-   * Updates the order of actions if needed.
-   *
+   * Updates the order of actions if needed (inner drag),
+   * or adds a new action at the end if the drag comes from the grid.
+   * 
    * @param {DragEndEvent} event - Event from dnd-kit.
    */
-  const handleDragEnd = (event: DragEndEvent) => {
-    stop();
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = actions.findIndex(a => a.uid === active.id);
-      const newIndex = actions.findIndex(a => a.uid === over.id);
-      moveAction(oldIndex, newIndex);
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    stop?.();
+
+    const data = active?.data?.current as any;
+
+    //  Dragging in from the grid 
+    if (data?.source === 'grid' && data?.action) {
+      // Default to append if we didn't drop over a specific item
+      let insertIndex = actions.length;
+
+      // If we dropped over a specific sequence item, insert BEFORE that item
+      if (over && over.id !== 'sequence-bar-drop') {
+        const overIndex = actions.findIndex(a => a.uid === over.id);
+        if (overIndex !== -1) {
+          insertIndex = overIndex; // insert before the hovered item
+        }
+      }
+
+      // 1) append to end (the existing behavior)
+      const preLength = useActionStore.getState().actions.length;
+      addAction(data.action);
+
+      // 2) then move the newly appended item into the target slot
+      //    (wait a frame so the appended item exists in state)
+      requestAnimationFrame(() => {
+        const { actions: latest, moveAction } = useActionStore.getState();
+        const newIndex = latest.length - 1; // appended at the end
+        if (insertIndex < newIndex) {
+          moveAction(newIndex, insertIndex);
+        }
+      });
+
+      return;
+    }
+
+    // Reordering inside the sequence (existing/old logic) 
+    if (over && active?.id !== over.id) {
+      const from = actions.findIndex(a => a.uid === active.id);
+      const to = actions.findIndex(a => a.uid === over.id);
+      if (from !== -1 && to !== -1) {
+        moveAction(from, to);
+      }
     }
   };
-
   return (
     <div className="w-screen relative z-2">
-      {/* Scrollable container */}
       <div
         ref={scrollRef}
         className="flex flex-row h-[50vh] items-center bg-transparent w-full overflow-x-auto scrollbar-hidden"
-        style={{
-          touchAction: 'pan-x', // Allows touch scrolling horizontally
-          cursor: 'grab',
-        }}
+        style={{ touchAction: 'pan-x', cursor: 'grab' }}
       >
-        {/* Left padding */}
         <div style={{ minWidth: "calc(50vw - 5rem)" }} />
 
-        {/* Action blocks area */}
         <div
-          className="bg-transparent h-40 flex items-center justify-center gap-2"
+          ref={setDropZoneRef}
+          className={`bg-transparent h-40 flex items-center justify-center gap-2 transition-colors duration-200 ${isGridDropOver ? "bg-blue-100" : ""}`}
           onMouseEnter={() => setIsInteractingWithItem(true)}
           onMouseLeave={() => setIsInteractingWithItem(false)}
         >
-          <DndContext
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-            modifiers={[restrictToHorizontalAxis, restrictToParentElement]}
+          {/* No DndContext here anymore */}
+          <SortableContext
+            items={actions.map(action => action.uid)}
+            strategy={horizontalListSortingStrategy}
           >
-            <SortableContext
-              items={actions.map(action => action.uid)}
-              strategy={horizontalListSortingStrategy}
-            >
-              <div className="flex gap-2">
-                {actions.map(action => (
-                  <SortableItem key={action.uid} action={action} />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-
-          {/* Right-side invisible spacer for layout */}
+            <div className="flex gap-2">
+              {actions.map(action => (
+                <SortableItem key={action.uid} action={action} />
+              ))}
+            </div>
+          </SortableContext>
           <div className="w-40 h-40" />
         </div>
 
-        {/* Right padding */}
         <div style={{ minWidth: "calc(50vw - 5rem)" }} />
 
-        {/* Custom scrollbar overlay */}
         <div className="absolute bottom-0 flex" style={{ zIndex: 10 }}>
           <CustomScrollbar
             scrollLeft={scrollMetrics.scrollLeft}
