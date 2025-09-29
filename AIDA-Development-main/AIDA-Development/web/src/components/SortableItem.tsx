@@ -8,8 +8,8 @@ import { DynamicActionBlock } from './DynamicActionBlock';
  *
  * Wraps an individual action block and makes it sortable via dnd-kit.
  *
- * @param {{ action: ActionDataExtended, position: number }} props
- * @returns {JSX.Element} The rendered sortable item with position badge.
+ * @param {{ action: ActionDataExtended }} props - The action data, including a unique UID.
+ * @returns {JSX.Element} The rendered sortable item with a position badge on top
  */
 export function SortableItem({ action, position }: { action: ActionDataExtended, position: number }) {
   const {
@@ -21,7 +21,7 @@ export function SortableItem({ action, position }: { action: ActionDataExtended,
   } = useSortable({ id: action.uid });
 
   const style = {
-    touchAction: 'none',
+    touchAction: 'none', // Prevent default touch actions on draggable items
     transform: CSS.Transform.toString(transform),
     transition,
     display: 'flex',
