@@ -67,10 +67,13 @@ import com.example.aida.ui.constants.specialActionTextLimit
 import com.example.aida.ui.viewmodel.SequenceBarState
 import com.example.aida.ui.viewmodel.SequenceViewModel
 import com.example.aida.ui.viewmodel.UserInteractionState
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.wrapContentSize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableRow
 import java.util.Locale
+
 
 
 /**
@@ -216,7 +219,25 @@ fun SequenceBar(
                 visible = true,
                 enter = scaleIn(),
                 exit = scaleOut()
-            ) {
+            )
+            {
+                Box(
+                    modifier = Modifier
+                        .wrapContentSize(Alignment.Center)
+                        .padding(top=20.dp)
+
+                ) {
+                    Text(
+                        text = (index + 1).toString(),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .offset(y = (-25).dp)
+                            .background( color = Color.Black.copy(alpha=0.6f), shape = RoundedCornerShape(size = 4.dp))
+                            .padding(horizontal = 10.dp, vertical = 1.dp) )
+
                 Card(
                     modifier = Modifier
                         .animateContentSize(
@@ -347,6 +368,7 @@ fun SequenceBar(
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
+                    }
                     }
                 }
             }
