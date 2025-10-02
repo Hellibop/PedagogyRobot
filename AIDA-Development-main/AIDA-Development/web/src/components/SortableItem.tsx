@@ -32,7 +32,7 @@ export function SortableItem({ action, position }: { action: ActionDataExtended,
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} data-snap-target>
       {/* Position badge */}
-      <div className="text-sm font-bold mb-1 bg-gray-700 text-white px-2 py-1 rounded">
+      <div className="text-sm font-bold mb-1 bg-neutral-950/60 text-white px-2 py-1 rounded">
         {position}
       </div>
       <DynamicActionBlock action={action.action} uid={action.uid} />
