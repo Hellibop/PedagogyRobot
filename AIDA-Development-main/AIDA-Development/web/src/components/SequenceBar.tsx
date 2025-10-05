@@ -19,6 +19,7 @@ import { useDragScroll } from './hooks/useDragScroll';
  * - Background dragging to scroll (only when not interacting with items).
  * - Smooth scroll snapping.
  * - Custom scrollbar overlay.
+ * - Position badge to display postion in sequence
  * 
  * @returns {JSX.Element} Rendered ActionBlockSeqList component.
  */
@@ -95,8 +96,12 @@ export function ActionBlockSeqList() {
               strategy={horizontalListSortingStrategy}
             >
               <div className="flex gap-2">
-                {actions.map(action => (
-                  <SortableItem key={action.uid} action={action} />
+                {actions.map((action, index) => (
+                  <SortableItem 
+                    key={action.uid} 
+                    action={action} 
+                    position={index + 1} 
+                  />
                 ))}
               </div>
             </SortableContext>
