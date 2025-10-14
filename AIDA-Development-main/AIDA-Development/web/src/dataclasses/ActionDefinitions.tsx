@@ -178,6 +178,7 @@ eightBitLaser.internalName = "sebl";
 eightBitLaser.isSet = true;
 eightBitLaser.duration = 1.5;
 eightBitLaser.icon = "LucideMusic2";
+eightBitLaser.audioFile = new Audio('/android/app/src/main/res/raw/eight_bit_laser.mp3');
 
 export const beepingRobotMachine: SoundAction = new SoundAction();
 beepingRobotMachine.title = "Beeping Robot Machine";
@@ -185,6 +186,7 @@ beepingRobotMachine.internalName = "sbrm";
 beepingRobotMachine.isSet = true;
 beepingRobotMachine.duration = 2.0;
 beepingRobotMachine.icon = "LucideMusic2";
+beepingRobotMachine.audioFile = new Audio('/android/app/src/main/res/raw/beeping_robot_or_machine.mp3');
 
 export const robotPowerOff: SoundAction = new SoundAction();
 robotPowerOff.title = "Robot Power Off";
@@ -192,6 +194,7 @@ robotPowerOff.internalName = "srpo";
 robotPowerOff.isSet = true;
 robotPowerOff.duration = 3.0;
 robotPowerOff.icon = "LucideMusic2";
+robotPowerOff.audioFile = new Audio('/android/app/src/main/res/raw/robot_power_off.mp3');
 
 export const mechanicalClamp: SoundAction = new SoundAction();
 mechanicalClamp.title = "Mechanical Clamp";
@@ -199,6 +202,7 @@ mechanicalClamp.internalName = "smec";
 mechanicalClamp.isSet = true;
 mechanicalClamp.duration = 2.5;
 mechanicalClamp.icon = "LucideMusic2";
+mechanicalClamp.audioFile = new Audio('/android/app/src/main/res/raw/mechanicalclamp.mp3');
 
 export const robotCall: SoundAction = new SoundAction();
 robotCall.title = "Robot Call";
@@ -206,6 +210,7 @@ robotCall.internalName = "sroc";
 robotCall.isSet = true;
 robotCall.duration = 2.0;
 robotCall.icon = "LucideMusic2";
+robotCall.audioFile = new Audio('/android/app/src/main/res/raw/robot_call.mp3');
 
 export const robotDrum: SoundAction = new SoundAction();
 robotDrum.title = "Robot Drum";
@@ -213,6 +218,7 @@ robotDrum.internalName = "srod";
 robotDrum.isSet = true;
 robotDrum.duration = 2.5;
 robotDrum.icon = "LucideMusic2";
+robotDrum.audioFile = new Audio('/android/app/src/main/res/raw/robot_drum_loop_100bpm.mp3');
 
 export {
   longForward,

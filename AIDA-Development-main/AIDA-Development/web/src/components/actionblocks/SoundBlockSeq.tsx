@@ -77,6 +77,8 @@ export function SoundBlockSeq({
                       className="mt-3 p-3 rounded-2xl bg-yellow-500 cursor-pointer"
                       onClick={() => {
                         setCurrentAction(inputSound);
+			var audio = new Audio('android/app/src/main/res/raw/robot_call.mp3');
+			audio.play();
                         close();
                       }}
                     >
@@ -127,7 +129,7 @@ function SoundActionButtons(
           updated.uid = uid;
           updateAction(uid, updated);
           setCurrentAction(sound);
-          close();
+	  close();
         }}
       >
         <p>{sound.title}</p>

@@ -86,6 +86,7 @@ class GestureAction extends BaseAction {
 class SoundAction extends BaseAction {
     type: ActionType = ActionType.Sound;
     isSet: boolean = false;
+    audioFile: audio = Audio;
 
     constructor(init?: Partial<SoundAction>) {
         super(init);
