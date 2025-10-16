@@ -10,7 +10,31 @@ import { useActionStore } from './actionStore';
 import { loadActionsFromStorage } from './dataclasses/Loader';
 import { QrPopup } from './parser_qr/QrPopup';
 // NEW:
-import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
+// import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
+// import {
+//   DndContext,
+//   closestCenter,
+//   type DragEndEvent,
+//   useSensor,
+//   useSensors,
+//   MouseSensor,
+//   TouchSensor,
+// } from '@dnd-kit/core';
+import {
+  DndContext,
+  closestCenter,
+  type DragEndEvent,
+  useSensor,
+  useSensors,
+  MouseSensor,
+  TouchSensor,
+  DragOverlay,
+  defaultDropAnimation,
+  type DropAnimation,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import { ActionBlock } from './components/actionblocks/ActionBlock'; // same visual as your grid tile
+
 
 useActionStore.getState().actions = loadActionsFromStorage()
 
@@ -31,6 +55,7 @@ function App() {
     setSequence([...sequence, block]);
   }
 
+
   const playing = useActionStore(state => state.playing);
 
   // NEW: selectors from store for drag handling
@@ -41,42 +66,52 @@ function App() {
   const addAction = useActionStore(s => s.addAction);
   const moveAction = useActionStore(s => s.moveAction);
   const stop = useActionStore(s => s.stop);
+  //new
+  const sensors = useSensors(
+    // desktop: require a small move before drag
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    // touch: require a short press to start drag (prevents taps becoming drags)
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+  );
+  //new
+  const [activeDrag, setActiveDrag] = useState<any | null>(null);
 
+  const dropAnimation: DropAnimation = {
+    ...defaultDropAnimation,
+    duration: 250,
+    easing: 'cubic-bezier(0.2, 0, 0, 1)',
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDrag(event.active?.data?.current || null);
+  };
   // NEW: single drag-end handler for the whole workspace
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     stop?.();
 
     const data = active?.data?.current as any;
 
-    //  Dragging in from the grid 
+    // inside handleDragEnd in App.tsx
     if (data?.source === 'grid' && data?.action) {
-      // Default to append if we didn't drop over a specific item
-      let insertIndex = actions.length;
+      let insertIndex = actions.length; // default: append
 
-      // If we dropped over a specific sequence item, insert BEFORE that item
-      if (over && over.id !== 'sequence-bar-drop') {
+      if (over && over.id !== 'sequence-bar-drop' && over.id !== 'sequence-append') {
         const overIndex = actions.findIndex(a => a.uid === over.id);
         if (overIndex !== -1) {
-          insertIndex = overIndex; // insert before the hovered item
+          insertIndex = overIndex; // insert before hovered item
         }
       }
 
-      // 1) append to end (the previous existing behavior)
-      const preLength = useActionStore.getState().actions.length;
+      // append then move
       addAction(data.action);
-
-      // 2) then move the newly appended item into the target slot
-      //    (wait a frame so the appended item exists in state)
       requestAnimationFrame(() => {
         const { actions: latest, moveAction } = useActionStore.getState();
-        const newIndex = latest.length - 1; // appended at the end
-        if (insertIndex < newIndex) {
-          moveAction(newIndex, insertIndex);
-        }
+        const newIndex = latest.length - 1; // appended at end
+        if (insertIndex < newIndex) moveAction(newIndex, insertIndex);
       });
-
       return;
     }
+
 
     //  Reordering inside the sequence (existing/old logic) 
     if (over && active?.id !== over.id) {
@@ -88,11 +123,13 @@ function App() {
     }
   };
   return (
-    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={(e) => { handleDragEnd(e); setActiveDrag(null); }}
+      onDragCancel={() => setActiveDrag(null)}>
       <div className={`${playing ? 'bg-gray-400' : 'bg-white'} flex flex-col h-screen`}>
         <div className='flex items-center h-1/2'>
           <ActionBlockSeqList />
-          <div className="absolute h-1/2 left-1/2 transform -translate-x-1/2 w-40 bg-green-400 z-0"></div>
+          {/* <div className="absolute h-1/2 left-1/2 transform -translate-x-1/2 w-40 bg-green-400 z-0"></div> */}
+          <div className="absolute h-1/2 left-1/2 transform -translate-x-1/2 w-40 bg-green-400 z-0 pointer-events-none"></div>
         </div>
 
         {/* Export / Clear */}
@@ -102,7 +139,13 @@ function App() {
         <div className="absolute top-3 left-3 z-1000">
           <ClearButton />
         </div>
-
+        <DragOverlay dropAnimation={dropAnimation}>
+          {activeDrag?.source === 'grid' && activeDrag?.action ? (
+            <div className="h-40 w-40 rounded-xl shadow-xl">
+              <ActionBlock action={activeDrag.action} />
+            </div>
+          ) : null}
+        </DragOverlay>
         {/* The grid is likely rendered inside Footer; that's fine—it's inside the same DndContext */}
         <div className='h-1/2 w-screen'>
           <Footer addBlock={addBlock} />
