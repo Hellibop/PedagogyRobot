@@ -52,13 +52,17 @@ export function ActionBlockSeqList() {
   }, [setScrollRef]);
 
   // Detect drag state once; reuse it
-  const dnd = useDndContext();
-  const isDraggingAnywhere = !!dnd.active;
-  const isGridDrag = dnd.active?.data?.current?.source === 'grid';
+  // const dnd = useDndContext();
+  // const isDraggingAnywhere = !!dnd.active;
+  // const isGridDrag = dnd.active?.data?.current?.source === 'grid';
 
-  // Enables drag-to-scroll behavior unless interacting with an item OR any drag is active
-  useDragScroll(scrollRef, isInteractingWithItem || isDraggingAnywhere);
+  // // Enables drag-to-scroll behavior unless interacting with an item OR any drag is active
+  // useDragScroll(scrollRef, isInteractingWithItem || isDraggingAnywhere);
+  const { active } = useDndContext();
+  const isGridDrag = active?.data?.current?.source === 'grid';
 
+  // 2) restore the old scroll-drag behavior (do not tie it to global drag state)
+  useDragScroll(scrollRef, isInteractingWithItem);
   // Background + append droppables (attached only during grid→sequence drags)
   const { setNodeRef: setDropZoneRef, isOver } = useDroppable({ id: 'sequence-bar-drop' });
   const { setNodeRef: setAppendRef, isOver: isOverAppend } = useDroppable({ id: 'sequence-append' });
@@ -94,36 +98,26 @@ export function ActionBlockSeqList() {
 
         {/* Action blocks area */}
         <div
-          // ⬇︎ only attach the background droppable when dragging from grid
+          // attach the background droppable only for grid→sequence drags
           ref={isGridDrag ? setDropZoneRef : undefined}
-          className={`bg-transparent h-40 flex items-center justify-center gap-2 transition-colors duration-200 ${isGridDrag && isOver ? "bg-blue-100" : ""}`}
+          className={`bg-transparent h-40 flex items-center justify-center gap-2 ${isGridDrag && isOver ? "bg-blue-100" : ""}`}
           onMouseEnter={() => setIsInteractingWithItem(true)}
           onMouseLeave={() => setIsInteractingWithItem(false)}
-          onPointerDown={() => setIsInteractingWithItem(true)}   // ensure scroll is disabled BEFORE drag starts
-          onPointerUp={() => setIsInteractingWithItem(false)}    // re-enable after
-          onPointerCancel={() => setIsInteractingWithItem(false)}
         >
           <SortableContext
-            items={actions.map(action => action.uid)}
+            items={actions.map(a => a.uid)}
             strategy={horizontalListSortingStrategy}
           >
             <div className="flex gap-2">
               {actions.map((action, index) => (
-                <SortableItem
-                  key={action.uid}
-                  action={action}
-                  position={index + 1}
-                />
+                <SortableItem key={action.uid} action={action} position={index + 1} />
               ))}
             </div>
           </SortableContext>
 
-          {/* ⬇︎ append sentinel exists ONLY for grid drags, so it never affects internal reordering */}
+          {/* append sentinel — ONLY for grid drags, and on the RIGHT */}
           {isGridDrag && (
-            <div
-              ref={setAppendRef}
-              className={`w-40 h-40 ${isOverAppend ? 'ring-2 ring-blue-400 rounded-md' : ''}`}
-            />
+            <div ref={setAppendRef} className={`w-40 h-40 ${isOverAppend ? 'ring-2 ring-blue-400 rounded-md' : ''}`} />
           )}
         </div>
 
