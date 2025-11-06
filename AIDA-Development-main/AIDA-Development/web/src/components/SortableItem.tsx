@@ -1,19 +1,28 @@
-// SortableItem.tsx — old working version
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ActionDataExtended } from '../dataclasses/ActionDataExtended';
 import { DynamicActionBlock } from './DynamicActionBlock';
 
-export function SortableItem({ action, position }: { action: ActionDataExtended, position: number }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: action.uid });
+export function SortableItem({
+  action,
+  position,
+}: {
+  action: ActionDataExtended;
+  position: number;
+}) {
+  // Supply custom data so we can tell drags apart in the parent context
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: action.uid,
+    data: { source: 'sequence', action },
+  });
 
   const style = {
     touchAction: 'none',
     transform: CSS.Transform.toString(transform),
     transition,
     display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center'
+    flexDirection: 'column' as const,
+    alignItems: 'center' as const,
   };
 
   return (
