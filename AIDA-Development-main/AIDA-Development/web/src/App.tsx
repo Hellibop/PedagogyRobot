@@ -22,7 +22,7 @@ import {
 import { ActionBlock } from './components/actionblocks/ActionBlock';
 import { DynamicActionBlock } from './components/DynamicActionBlock';
 
-// preload actions
+//preload actions
 useActionStore.getState().actions = loadActionsFromStorage();
 
 /**
