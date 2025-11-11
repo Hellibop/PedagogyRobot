@@ -8,6 +8,12 @@ import {
   VoiceAction,
 } from "./ActionData";
 
+
+// Import sound assets.  These imports allow bundlers like Vite to include the
+// audio files in the build output and return the resolved URL at runtime.
+// If you add new sounds, import them here and assign them to the
+// corresponding SoundAction below.
+// adding imports to android part and trying to import them into web directly will not work since Vite will not have it included in its build.
 import eightBitLaserSrc from '../audio/eight_bit_laser.mp3';
 import beepingRobotMachineSrc from '../audio/beeping_robot_or_machine.mp3';
 import robotPowerOffSrc from '../audio/robot_power_off.mp3';
