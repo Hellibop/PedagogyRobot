@@ -47,7 +47,7 @@ import robotDrumSrc from '../audio/robot_drum_loop_100bpm.mp3';
 
   7.  You have addded your action. Now add it in the app as well! 
 
-*/ 
+*/
 
 
 //Base Actions.
@@ -117,19 +117,19 @@ loopEnd.isEnd = true;
 
 const inputGesture: GestureAction = new GestureAction();
 inputGesture.title = "Input Gesture";
-inputGesture.duration = 2.0; 
+inputGesture.duration = 2.0;
 inputGesture.icon = "LucideHand";
 inputGesture.internalName = "ipg";
 
 const inputVoice: VoiceAction = new VoiceAction();
 inputVoice.title = "Input Voice";
-inputVoice.duration = 2.0; 
+inputVoice.duration = 2.0;
 inputVoice.icon = "LucideMegaphone";
 inputVoice.internalName = "ipv";
 
 const inputSound: SoundAction = new SoundAction();
 inputSound.title = "Input Sound";
-inputSound.duration = 2.0; 
+inputSound.duration = 2.0;
 inputSound.icon = "LucideMusic2";
 inputSound.internalName = "imu";
 
@@ -185,7 +185,7 @@ eightBitLaser.internalName = "sebl";
 eightBitLaser.isSet = true;
 eightBitLaser.duration = 1.5;
 eightBitLaser.icon = "LucideMusic2";
-eightBitLaser.audioFile = new Audio(robotDrumSrc);
+eightBitLaser.audioFile = new Audio(eightBitLaserSrc);
 
 export const beepingRobotMachine: SoundAction = new SoundAction();
 beepingRobotMachine.title = "Beeping Robot Machine";
