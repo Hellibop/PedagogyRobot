@@ -17,12 +17,12 @@ enum ActionType {
 */
 class BaseAction {
     title: string = "";
-    type: ActionType = ActionType.Base; 
+    type: ActionType = ActionType.Base;
     icon: string = "LucideAArrowUp"; //The name of the icon the action uses. String formt and then make sure to map it in #IconMap.
     duration: number = 0; //The time an action takes to execute.
     durationRemaining: number = 0; //The time remaining of the action.
     height: number = 160;
-    width: number = 150; 
+    width: number = 150;
     scaling: number = 1; //Unused. Can be used for scaling the UI.
     internalName: string = "nil"; // Internal language name used for QR-code.
 
@@ -84,6 +84,14 @@ class GestureAction extends BaseAction {
 */
 
 class SoundAction extends BaseAction {
+    /**
+    * A SoundAction represents an action that plays an audio clip.  In addition to
+    * the standard BaseAction fields, a sound action tracks whether a specific
+    * sound has been selected (`isSet`) and holds a reference to an
+    * `HTMLAudioElement` that can be played when the action is executed.  The
+    * audioFile is optional because an empty SoundAction (used to represent
+    * "Input Sound") does not have a file associated until the user picks one.
+    */
     type: ActionType = ActionType.Sound;
     isSet: boolean = false;
     audioFile: HTMLAudioElement | null = null;
