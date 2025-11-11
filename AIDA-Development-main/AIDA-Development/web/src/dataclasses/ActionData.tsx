@@ -86,7 +86,7 @@ class GestureAction extends BaseAction {
 class SoundAction extends BaseAction {
     type: ActionType = ActionType.Sound;
     isSet: boolean = false;
-    audioFile: audio = Audio;
+    audioFile: HTMLAudioElement | null = null;
 
     constructor(init?: Partial<SoundAction>) {
         super(init);
