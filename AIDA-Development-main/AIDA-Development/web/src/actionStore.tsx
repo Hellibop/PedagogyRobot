@@ -196,6 +196,11 @@ export const useActionStore = create<ActionStoreState>((set, get) => ({
       // Get current action
       const action = actions[currentIndex].action;
 
+      if (action instanceof SoundAction && action.audioFile){
+	action.audioFile.currentTime = 0;
+	action.audioFile.play().catch((err) => console.warn(err));
+}
+
       if (currentIndex + 1 < actions.length) {
         console.log("Next item not out of index")
         const nextAction = actions[currentIndex + 1].action;
@@ -273,6 +278,9 @@ export const useActionStore = create<ActionStoreState>((set, get) => ({
   },
 
   play: () => {
+    // TESTING OF AUDIO
+    var audio = new Audio('/android/app/src/main/res/raw/robot_call.mp3');
+    audio.play();
     set((state) => {
       console.log("Playing entire sequence");
       
