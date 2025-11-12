@@ -409,6 +409,9 @@ class InterfaceNode(Node):
 
         This method continuously publishes joystick data from the joystick queue.
         """
+
+        reset_sent = False      # flag to ensure that msg is only sent once
+
         while True:
             if self.joystick_publisher_event.is_set():
                 break
@@ -416,10 +419,20 @@ class InterfaceNode(Node):
                 msg = self.joystick_queue.get(block=False)
             except queue.Empty:
                 msg = None
+
             if self.joystick_publisher_event.is_set():
                 break
+
             if msg != None:
                 self.joystick_pub.publish(msg)
+                reset_sent = False      # reset flag if new msg's arrive.
+            else:
+                if not reset_sent:
+                    reset_msg = self.to_joystick_msg((0,0))     # create reset msg
+                    self.joystick_pub.publish(reset_msg)
+                    reset_sent = True
+
+
 
     def start_server(self):
         """
