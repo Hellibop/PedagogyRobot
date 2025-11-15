@@ -20,6 +20,8 @@ import json
 
 import serial
 
+import ros2_humble_ws.src.aida_api.aida_api.if_else_conditions_handler as cond_handler
+
 # from lidar_data.msg import LiDAR
 
 # Socket Constants
@@ -826,12 +828,13 @@ class InterfaceNode(Node):
                     i += 1
             
             elif action == actionNames.IF_START:
-                condition = self.evaluate_condition(extra_data)
-                if condition:
+                condition_result = cond_handler.if_else_condition_handler(extra_data)
+                if condition_result:
                     self.get_logger().info(f"Sequence| Condition met at IF_START, executing true block.")
                     i += 1
                 else:
                     self.get_logger().info(f"Sequence| Condition not met at IF_START, skipping to IF_ELSE or IF_END.")
+                    # Nested if blocks will probably fail here... however app does not support nesting.
                     while i < len(ids) and ids[i] not in [actionNames.IF_ELSE, actionNames.IF_END]:
                         i += 1
 
@@ -887,29 +890,6 @@ class InterfaceNode(Node):
                 time.sleep(delay)
             
         self.get_logger().info("Sequence| Sequence done")
-
-    
-    def evaluate_condition(self, condition_data):
-        """
-        Evaluate the condition for an IF_START action.
-        Args:
-            condition_data: The data specifying the condition to evaluate.
-        Returns:
-            bool: True if the condition is met, False otherwise.
-        """
-        condition_type = condition_data["type"]
-        # TODO implement different contition types
-        if condition_type == "Camera_is":
-            # TODO implement helper function all the condition types
-            value = condition_data["value"]
-            return True
-        elif condition_type == "Voice_is":
-            value = condition_data["value"]
-            return False
-        else:
-            self.get_logger().warn(f"Unknown condition type: {condition_type}")
-            return False
-
 
     def ack(self, client, next):
         id = (99).to_bytes(2, "big")
