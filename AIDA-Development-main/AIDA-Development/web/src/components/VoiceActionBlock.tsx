@@ -48,7 +48,7 @@ export const VoiceActionBlockSeq = (
                 <div className="bg-white rounded-lg shadow-lg flex flex-col items-center p-10 m-2">
                   <label className="text-black font-semibold mb-2">Edit Message</label>
                   <input
-                    className="p-2 border rounded w-64"
+                    className="p-2 border rounded w-64 text-black"
                     type="text"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
@@ -69,7 +69,7 @@ export const VoiceActionBlockSeq = (
         </div>
       </div>
       <IconComponent className="w-20 h-20 text-white" />
-      <span className="text-lg font-semibold text-white">{action.title}</span>
+      <span className="text-lg font-semibold text-black">{action.title}</span>
     </div>
 
 

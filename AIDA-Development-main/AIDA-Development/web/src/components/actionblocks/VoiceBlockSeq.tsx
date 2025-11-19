@@ -139,7 +139,7 @@ export function VoiceBlockSeq({ action, uid }: { action: VoiceAction; uid: numbe
                   type="text"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className="p-2 border rounded w-64"
+                  className="p-2 border rounded w-64 text-black"
                   placeholder="Type something for the robot to say"
                 />
                 {/* Recent phrases */}
