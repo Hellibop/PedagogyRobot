@@ -64,12 +64,10 @@ export function VoiceBlockSeq({ action, uid }: { action: VoiceAction; uid: numbe
     localStorage.setItem('voiceMessages', JSON.stringify(newList));
   };
 
-  /**
-   * Save the current message to the global action store and update local
-   * state.  This function also persists the phrase to the recent list.
-   */
   const handleSave = (close: () => void) => {
     const newVoice = new VoiceAction({ ...currentAction, message });
+    // Ensure the voice message is included in exports by copying it to internalName
+    (newVoice as any).internalName = message;
     const extended = new ActionDataExtended(newVoice);
     extended.uid = uid;
     updateAction(uid, extended);
@@ -84,6 +82,8 @@ export function VoiceBlockSeq({ action, uid }: { action: VoiceAction; uid: numbe
    */
   const handleCancel = (close: () => void) => {
     const emptyVoice = new VoiceAction({ ...inputVoice });
+    // Reset internalName to an empty string on cancel
+    (emptyVoice as any).internalName = '';
     const extended = new ActionDataExtended(emptyVoice);
     extended.uid = uid;
     updateAction(uid, extended);

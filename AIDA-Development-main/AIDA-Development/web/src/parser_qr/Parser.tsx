@@ -1,4 +1,4 @@
-import { BaseAction, LoopAction } from "../dataclasses/ActionData";
+import { BaseAction, LoopAction, VoiceAction } from "../dataclasses/ActionData";
 import { ActionDataExtended } from "../dataclasses/ActionDataExtended";
 import { useActionStore } from "../actionStore";
 
@@ -11,25 +11,28 @@ import { useActionStore } from "../actionStore";
  */
 
 export const parser = () => {
-    // Get the actions from the Zustand store
+  // Get the actions from the Zustand store
   let blocks: ActionDataExtended[] = useActionStore.getState().actions;
 
 
   const actions: BaseAction[] = blocks.map(action => action.action);
   let output: string = "";
 
-  // Convert the actions to a string
-  actions.map((action) => {
+  actions.forEach(action => {
     if (action instanceof LoopAction) {
       if (!action.isEnd) {
-        output += action.internalName + "-" + action.iterations + ",";
+        output += `${action.internalName}-${action.iterations},`;
       } else {
-        output += action.internalName + ",";
+        output += `${action.internalName},`;
       }
+    } else if (action instanceof VoiceAction) {
+      const msg = action.message?.trim() ?? '';
+      output += `${action.internalName}:${encodeURIComponent(msg)},`;
     } else {
-      output += action.internalName + ",";
+      output += `${action.internalName},`;
     }
   });
+
 
   console.log(output);
   return output;
