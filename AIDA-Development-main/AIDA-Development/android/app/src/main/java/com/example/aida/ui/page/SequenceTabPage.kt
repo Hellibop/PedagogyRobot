@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.aida.domain.model.RobotActionType
@@ -161,8 +162,6 @@ fun SequenceTabPage(
         }
     }
 
-
-
     // Watch for the scroll state change
     LaunchedEffect(scrollState.isScrollInProgress) {
         // Check if the state changed from true to false
@@ -217,6 +216,46 @@ fun SequenceTabPage(
                         .zIndex(2f),
                     snapToClosestAction = snapToClosestAction
                 )
+
+                // Clear Sequence button
+                ClearSequenceButton(
+                    viewModel,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(x = 10.dp, y = 10.dp)
+                        .size(135.dp, 45.dp)
+                        .zIndex(2f),
+                    snapToClosestAction = snapToClosestAction
+                )
+
+                // Clear Sequence button
+                ClearSequenceButton(
+                    viewModel,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(x = 10.dp, y = 10.dp)
+                        .size(135.dp, 45.dp)
+                        .zIndex(2f),
+                    snapToClosestAction = snapToClosestAction
+                )
+
+
+                Button(
+                    onClick = { viewModel.toggleSelecting() },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(x = 155.dp, y = 10.dp)
+                        .size(135.dp, 45.dp)
+                        .zIndex(2f)
+                ) {
+                    Text(
+                        text = if (!uiState.isSelecting) "Select blocks" else "Exit",
+                        style = androidx.compose.ui.text.TextStyle(
+                            fontSize = 13.sp,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Normal
+                        )
+                    )
+                }
 
                 //Button to invoke the QR-scanner to import code from the webapp.
                 ImportButton(
@@ -357,19 +396,6 @@ fun SequenceTabPage(
                 }
             }
 
-            Button(
-                onClick = {
-                    viewModel.toggleSelecting()
-                },
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .padding(8.dp)
-            ) {
-                Text(
-                    if (!uiState.isSelecting) "Select blocks"
-                    else "Exit"
-                )
-            }
             // USER BUTTONS: Play, stop, step, etc.
             // USER BUTTONS: Play, stop, step, etc.
             UserButtons(
@@ -557,13 +583,15 @@ private suspend fun executeActionWithCountdown(
         }
 
         if (viewModel.getState() != UserInteractionState.STOPPED) {
+            val targetIndex = nextIndex ?: index + 1
             animateScrollToIndex(
-                index + 1,
+                targetIndex,
                 scrollState,
                 stepLength,
                 tween(durationMillis = 1000, easing = LinearEasing)
             )
         }
+
     }
 
     task.join()
