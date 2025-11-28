@@ -250,8 +250,13 @@ fun SequenceBar(
                         .background(GetActionColor(item.action))
                         .combinedClickable(onDoubleClick = {
                             // Activate popup when double clicking
-                            popupState.value.activate(index)
-                        }) { }
+                            popupState.value.activate(index) },
+                            onClick = {
+                                if (uiState.isSelecting && !uiState.isLocked) {
+                                    viewModel.toggleSelection(index)
+                                }
+                            }
+                            )
                         .semantics {
                             // Accessibility custom actions for moving items left or right
                             customActions = listOf(
@@ -296,7 +301,9 @@ fun SequenceBar(
                             }
                         ),
 
-                    colors = CardDefaults.cardColors(containerColor = GetActionColor(item.action))
+                    colors = CardDefaults.cardColors(containerColor = if (uiState.selectedIndices.contains(index))
+                    Color.Green.copy(alpha = 0.6f)
+                    else GetActionColor(item.action))
                 ) {
                     // Main container inside an action block
                     Box(

@@ -34,7 +34,9 @@ data class SequenceBarState(
     val actions: List<UIAction> = emptyList(),
     var menuState: UserInteractionState = UserInteractionState.STOPPED,
     var isLocked: Boolean = false,
-    var isConnected: Boolean = false
+    var isConnected: Boolean = false,
+    var isSelecting: Boolean = false,
+    val selectedIndices: Set<Int> = emptySet()
 )
 
 /**
@@ -294,6 +296,31 @@ class SequenceViewModel @Inject constructor(
      */
     fun getLockedState(): Boolean {
         return _sequenceBarState.value.isLocked
+    }
+
+    fun toggleSelection(index: Int) {
+        _sequenceBarState.update { current ->
+            val set = current.selectedIndices.toMutableSet()
+            if (set.contains(index)) set.remove(index) else set.add(index)
+            current.copy(selectedIndices = set)
+        }
+    }
+
+    fun toggleSelecting() {
+        _sequenceBarState.update { current ->
+            val newValue = !current.isSelecting
+            if (!newValue) {
+                current.copy(isSelecting = false, selectedIndices = emptySet())
+            } else {
+                current.copy(isSelecting = true)
+            }
+        }
+    }
+
+    fun getActionsToRun(): List<UIAction> {
+        val actions = _sequenceBarState.value.actions
+        val selected = _sequenceBarState.value.selectedIndices
+        return if (selected.isNotEmpty()) selected.map { actions[it] } else actions
     }
 
 }

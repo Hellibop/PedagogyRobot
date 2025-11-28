@@ -1,6 +1,8 @@
 package com.example.aida.ui.page
 
 import android.content.ClipDescription
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -355,11 +357,49 @@ fun SequenceTabPage(
                 }
             }
 
+            Button(
+                onClick = {
+                    viewModel.toggleSelecting()
+                },
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .padding(8.dp)
+            ) {
+                Text(
+                    if (!uiState.isSelecting) "Select blocks"
+                    else "Exit"
+                )
+            }
+            // USER BUTTONS: Play, stop, step, etc.
             // USER BUTTONS: Play, stop, step, etc.
             UserButtons(
                 onClickPlay = {
-                    viewModel.setState(UserInteractionState.PLAYING)
+                    val selected = uiState.selectedIndices.sorted()
+
+                    // If selection mode is active but nothing is selected do nothing
+                    if (uiState.isSelecting) {
+                        if (selected.isEmpty()) return@UserButtons
+                        viewModel.setState(UserInteractionState.PLAYING)
+                        currentPlayJob = coroutineScope.launch {
+                            for ((idx, currentIndex) in selected.withIndex()) {
+                                val nextIndex = selected.getOrNull(idx + 1)
+                                executeActionWithCountdown(
+                                    index = currentIndex,
+                                    coroutineScope = coroutineScope,
+                                    viewModel = viewModel,
+                                    scrollState = scrollState,
+                                    stepLength = stepDistanceInPixels,
+                                    nextIndex = nextIndex
+                                )
+                            }
+
+                            viewModel.setState(UserInteractionState.STOPPED)
+                        }
+                        return@UserButtons
+                    }
+
                     // TODO: avoid this code duplication
+                    viewModel.setState(UserInteractionState.PLAYING)
                     currentPlayJob = coroutineScope.launch {
                         if (currentIndex == uiState.actions.size) {
                             // Scroll to beginning if we are on the last block
@@ -498,6 +538,7 @@ private suspend fun executeActionWithCountdown(
     viewModel: SequenceViewModel,
     scrollState: ScrollState,
     stepLength: Int,
+    nextIndex: Int? = null
 ) {
     val task = coroutineScope.launch {
         // TODO: handle this in a better way, without an if check on index
