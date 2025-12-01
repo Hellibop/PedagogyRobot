@@ -64,6 +64,7 @@ import com.example.aida.ui.constants.sequenceBarActionHeight
 import com.example.aida.ui.constants.sequenceBarActionPadding
 import com.example.aida.ui.constants.sequenceBarActionWidth
 import com.example.aida.ui.constants.specialActionTextLimit
+import com.example.aida.ui.popups.PopupIf
 import com.example.aida.ui.viewmodel.SequenceBarState
 import com.example.aida.ui.viewmodel.SequenceViewModel
 import com.example.aida.ui.viewmodel.UserInteractionState
@@ -147,6 +148,16 @@ fun SequenceBar(
                     onSave = { sound ->
                         onDismiss()
                         viewModel.setData(popupState.value.selecetedIndex.value, sound)
+                    }
+                )
+            }
+
+            RobotActionType.IF_START -> {
+                PopupIf(
+                    onDismiss = onDismiss,
+                    onSave = { condition ->
+                        onDismiss()
+                        viewModel.setData(popupState.value.selecetedIndex.value, condition)
                     }
                 )
             }
@@ -289,8 +300,8 @@ fun SequenceBar(
                             // Display the special action icon and data (e.g., a gesture name)
                             renderSpecialActionButton(item)
 
-                            // If this is a special action (except LOOP END), show a settings button to open popup
-                            if (item.action.type != RobotActionType.LOOP_END) {
+                            // If this is a special action (except LOOP END and IF_END), show a settings button to open popup
+                            if (item.action.type != RobotActionType.LOOP_END && item.action.type != RobotActionType.IF_ELSE && item.action.type != RobotActionType.IF_END) {
                                 IconButton(
                                     onClick = {
                                         popupState.value.activate(index)
@@ -507,6 +518,47 @@ private fun drawLoopActionButton(
         )
     }
 }
+
+///**
+// * Renders the IF/ELSE/END button.
+// *
+// * @param item The [UIAction] to be rendered.
+// */
+//
+//@Composable
+//private fun drawIfEndActionButton(
+//    item: UIAction
+//) {
+//    val appearance = GetActionAppearance(item.action.type)
+//
+//    Column(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .padding(bottom = 18.dp),
+//        horizontalAlignment = Alignment.CenterHorizontally
+//
+//    ) {
+//         {
+//            // Icon and loop parameter (e.g. number of loops)
+//            Icon(
+//                imageVector = appearance.icon,
+//                contentDescription = "",
+//                tint = Color.White
+//            )
+//        }
+//
+//        Text(
+//            text = appearance.text,
+//            color = Color.White,
+//            fontWeight = FontWeight.Bold,
+//            style = TextStyle(
+//                fontSize = actionFontsize,
+//                textAlign = TextAlign.Center
+//            )
+//        )
+//    }
+//
+//}
 
 /**
  * Shortens the given text to a specified maximum length, adding a suffix if truncation occurs.
