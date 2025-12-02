@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Popup from 'reactjs-popup';
-import { LucideSettings, LucideX, LucidePlay } from 'lucide-react';
+import { LucideSettings, LucideX, LucidePlay, Mic, MicOff } from 'lucide-react';
 import { VoiceAction } from '../../dataclasses/ActionData';
 import { iconMap, IconName } from '../../dataclasses/IconMap';
 import { useActionStore } from '../../actionStore';
@@ -20,8 +20,23 @@ import { inputVoice } from '../../dataclasses/ActionDefinitions';
  * Props:
  *   action – the VoiceAction associated with this block
  *   uid – unique identifier for the extended action
+ * 
+ * UPDATE:
+ * adding speech‑to‑text
+ * functionality via the Web Speech API.  When editing the voice block in
+ * its pop‑up, the user can click a microphone icon to dictate their
+ * message.  Supported only in browsers that implement the
+ * `window.SpeechRecognition` or `window.webkitSpeechRecognition` interface
+ * (currently Chrome and Edge).  If the API is unavailable, the dictation
+ * button is disabled.
  */
-export function VoiceBlockSeq({ action, uid }: { action: VoiceAction; uid: number }) {
+export function VoiceBlockSeq({
+  action,
+  uid,
+}: {
+  action: VoiceAction;
+  uid: number;
+}) {
   // Local state mirrors the current action and its message
   const [currentAction, setCurrentAction] = useState(action);
   const [message, setMessage] = useState(action.message ?? '');
@@ -106,6 +121,71 @@ export function VoiceBlockSeq({ action, uid }: { action: VoiceAction; uid: numbe
     }
   };
 
+  /**
+   * Speech recognition setup.  We keep a ref to the recognition instance
+   * across renders so we can start/stop it from event handlers.  When
+   * recognition is active, isListening is true and the microphone button
+   * toggles to a "stop" icon.
+   */
+  const recognitionRef = useRef<any | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+
+  // Initialise the SpeechRecognition instance when the component mounts.
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Chrome exposes speech recognition via webkit prefix if not standard
+      const SpeechRecognition: any =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        setSpeechSupported(true);
+        const recog = new SpeechRecognition();
+        recog.lang = 'en-US';
+        recog.interimResults = false;
+        recog.maxAlternatives = 1;
+        // Append recognised text to the message when a result is available
+        recog.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          // Append with a space if existing text
+          setMessage((prev) => (prev.trim() ? `${prev} ${transcript}` : transcript));
+        };
+        // When speech ends, stop the recognition service and reset state
+        recog.onend = () => {
+          setIsListening(false);
+        };
+        recog.onerror = () => {
+          setIsListening(false);
+        };
+        recognitionRef.current = recog;
+      }
+    }
+  }, []);
+
+  /**
+   * Toggle speech recognition.  When not listening, start recognition; when
+   * listening, stop it.  If the API is unsupported the button will be
+   * disabled.
+   */
+  const toggleListening = () => {
+
+    if (!speechSupported || !recognitionRef.current) return;
+    if (!isListening) {
+      try {
+        // Reset any previous partial results by stopping and restarting
+        recognitionRef.current.abort?.();
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (err) {
+        // Some implementations throw an exception if start is called
+        // while already started; ensure state reflects that we couldn't
+        setIsListening(false);
+      }
+    } else {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
+  };
+
   return (
     <div
       className={`w-40 h-40 flex flex-col items-center justify-center gap-2 p-4 border rounded-xl shadow-md ${color} text-center cursor-grab active:cursor-grabbing`}
@@ -143,6 +223,28 @@ export function VoiceBlockSeq({ action, uid }: { action: VoiceAction; uid: numbe
                   className="p-2 border rounded w-64 text-black"
                   placeholder="Type something for the robot to say"
                 />
+                {/* Microphone button for dictation */}
+                <button
+                  onClick={toggleListening}
+                  disabled={!speechSupported}
+                  className={`flex items-center px-3 py-2 rounded ${speechSupported
+                    ? isListening
+                      ? 'bg-red-500 hover:bg-red-600 text-white'
+                      : 'bg-purple-500 hover:bg-purple-600 text-white'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                >
+                  {speechSupported ? (
+                    isListening ? (
+                      <MicOff className="w-4 h-4 mr-2" />
+                    ) : (
+                      <Mic className="w-4 h-4 mr-2" />
+                    )
+                  ) : (
+                    <MicOff className="w-4 h-4 mr-2" />
+                  )}
+                  {isListening ? 'Stop' : 'Dictate'}
+                </button>
                 {/* Recent phrases */}
                 {savedMessages.length > 0 && (
                   <div className="mt-2 w-full max-h-40 overflow-y-auto border rounded p-2 bg-gray-100">
@@ -150,7 +252,8 @@ export function VoiceBlockSeq({ action, uid }: { action: VoiceAction; uid: numbe
                     {savedMessages.map((msg, idx) => (
                       <div
                         key={idx}
-                        className={`p-1 rounded cursor-pointer ${msg === message ? 'bg-yellow-200' : 'bg-white hover:bg-gray-200'}`}
+                        className={`p-1 rounded cursor-pointer ${msg === message ? 'bg-yellow-200' : 'bg-white hover:bg-gray-200'
+                          }`}
                         onClick={() => setMessage(msg)}
                       >
                         <span className="text-sm text-gray-800 truncate">{msg}</span>
