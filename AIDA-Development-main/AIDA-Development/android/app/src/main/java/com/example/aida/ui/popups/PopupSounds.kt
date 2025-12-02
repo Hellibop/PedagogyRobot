@@ -1,5 +1,6 @@
 package com.example.aida.ui.popups
 
+import android.R
 import android.media.MediaPlayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.aida.ui.constants.moveActionColor
 import com.example.aida.ui.constants.specialActionColor
+import kotlin.collections.listOf
 
 /**
  * Popup that displays a selection of sounds to pick. Called when opening the configuration
@@ -40,6 +42,10 @@ import com.example.aida.ui.constants.specialActionColor
  * @param onSave Callback that is called upon saving the sound. Gets called with the name of
  * the sound as a string.
  */
+
+var savedSound : Int = -1   // Find a way to NOT have this as a global variable. Only way we could make it work for now.
+val savedIndex = listOf()
+
 @Composable
 fun PopupSounds(
     onDismiss: () -> Unit,
@@ -48,6 +54,7 @@ fun PopupSounds(
     val context = LocalContext.current
     var selectedSoundIndex by remember { mutableStateOf<Int?>(null) }
     var isPlayingSound by remember { mutableStateOf(false) }
+    var soundSelect: Int = -1
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -96,7 +103,7 @@ fun PopupSounds(
                                     mediaPlayer.setOnCompletionListener {
                                         isPlayingSound = false
                                     }
-
+                                    soundSelect = sound
                                     selectedSoundIndex = index
                                 }
                             }
@@ -129,6 +136,8 @@ fun PopupSounds(
 
                                     onSave(selectedSound)
                                     onDismiss()
+                                    savedSound = soundSelect
+                                    savedIndex = selectedSound
                                 }
                             },
                             enabled = selectedSoundIndex != null
@@ -141,6 +150,7 @@ fun PopupSounds(
         }
     }
 }
+
 
 @Composable
 private fun SoundButton(

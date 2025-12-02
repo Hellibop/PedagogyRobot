@@ -1,6 +1,7 @@
 package com.example.aida.ui.page
 
 import android.content.ClipDescription
+import android.media.MediaPlayer
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -9,7 +10,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
-import androidx.compose.foundation.gestures.stopScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,11 +40,13 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.aida.R
 import com.example.aida.domain.model.RobotActionType
 import com.example.aida.ui.component.ActionButton
 import com.example.aida.ui.component.ClearSequenceButton
@@ -63,6 +65,13 @@ import com.example.aida.ui.constants.sequenceTabIdleColor
 import com.example.aida.ui.constants.sequenceTabPlayingColor
 import com.example.aida.ui.viewmodel.SequenceViewModel
 import com.example.aida.ui.viewmodel.UserInteractionState
+
+import com.example.aida.ui.popups.PopupSounds
+
+import android.content.Context
+import com.example.aida.ui.component.UIAction
+import com.example.aida.ui.popups.robotSounds
+import com.example.aida.ui.popups.savedSound
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -179,6 +188,11 @@ fun SequenceTabPage(
             viewModel.resetAllDurations()
         }
     }
+
+
+    // USED TO TRACK LOCAL CONTEXT FOR USE OF MEDIA PLAYER IN PLAY SOUND (COMPOSABLE)
+    val soundContext : Context = LocalContext.current
+
 
     // SEQUENCE BAR
     Column(
@@ -405,6 +419,9 @@ fun SequenceTabPage(
 
                             val task = launch {
                                 executeActionWithCountdown(
+                                    //selectedSoundIndex,
+                                    soundContext,
+                                    currentAction,
                                     currentIndex,
                                     coroutineScope,
                                     viewModel,
@@ -441,9 +458,12 @@ fun SequenceTabPage(
                                     currentIndex = 0
                                 }.join()
                             }
-
+                            val currentAction = uiState.actions[currentIndex]
                             val task = launch {
                                 executeActionWithCountdown(
+                                    //selectedSoundIndex,
+                                    soundContext,
+                                    currentAction,
                                     currentIndex,
                                     coroutineScope,
                                     viewModel,
@@ -492,7 +512,11 @@ fun SequenceTabPage(
  * @param scrollState The scroll state of the sequence bar.
  * @param stepLength The distance in pixels that each step should be.
  */
+
 private suspend fun executeActionWithCountdown(
+    //soundIndex: Int?,
+    soundContext: Context,
+    currAction: UIAction,
     index: Int,
     coroutineScope: CoroutineScope,
     viewModel: SequenceViewModel,
@@ -502,6 +526,11 @@ private suspend fun executeActionWithCountdown(
     val task = coroutineScope.launch {
         // TODO: handle this in a better way, without an if check on index
         // TODO: we shouldn't send actions if they're loop actions
+
+        if (currAction.action.type == RobotActionType.INPUT_SOUND) {
+            playSound(soundContext, index)
+        }
+
         if (index >= 0) {
             viewModel.executeAction(index)
 
@@ -526,6 +555,40 @@ private suspend fun executeActionWithCountdown(
     }
 
     task.join()
+}
+
+//@Composable
+fun playSound(context:Context, index:Int) {
+    //val context : Context = LocalContext.current
+    //var selectedSoundIndex by remember { mutableStateOf<Int?>(null) }
+    var isPlayingSound = false //by remember { mutableStateOf(false) }
+
+    if (!isPlayingSound) {
+        //selectedSound
+        //val selectedSound = robotSounds[it].first
+        /*soundSelect?.let {
+            val selectedSound = robotSounds[it].first
+        }*/
+        //val beep = robotSounds[soundSelect].first
+
+        if (savedSound != -1) {
+            val mediaPlayer = MediaPlayer.create(
+                context,
+                savedSound
+            )
+            mediaPlayer.start()
+
+
+            isPlayingSound = true
+
+            mediaPlayer.setOnCompletionListener {
+                isPlayingSound = false
+            }
+        }
+        //selectedSoundIndex = index
+        //}
+        //}
+    }
 }
 
 /**
