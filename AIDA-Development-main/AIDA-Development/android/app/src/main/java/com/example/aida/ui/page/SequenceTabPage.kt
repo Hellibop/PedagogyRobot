@@ -66,12 +66,9 @@ import com.example.aida.ui.constants.sequenceTabPlayingColor
 import com.example.aida.ui.viewmodel.SequenceViewModel
 import com.example.aida.ui.viewmodel.UserInteractionState
 
-import com.example.aida.ui.popups.PopupSounds
-
 import android.content.Context
 import com.example.aida.ui.component.UIAction
 import com.example.aida.ui.popups.robotSounds
-import com.example.aida.ui.popups.savedSound
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -419,9 +416,8 @@ fun SequenceTabPage(
 
                             val task = launch {
                                 executeActionWithCountdown(
-                                    //selectedSoundIndex,
-                                    soundContext,
-                                    currentAction,
+                                    soundContext,               // Context in order to work with sound
+                                    currentAction,  // Save current action in order to check what sound should play
                                     currentIndex,
                                     coroutineScope,
                                     viewModel,
@@ -461,7 +457,6 @@ fun SequenceTabPage(
                             val currentAction = uiState.actions[currentIndex]
                             val task = launch {
                                 executeActionWithCountdown(
-                                    //selectedSoundIndex,
                                     soundContext,
                                     currentAction,
                                     currentIndex,
@@ -514,7 +509,6 @@ fun SequenceTabPage(
  */
 
 private suspend fun executeActionWithCountdown(
-    //soundIndex: Int?,
     soundContext: Context,
     currAction: UIAction,
     index: Int,
@@ -528,7 +522,8 @@ private suspend fun executeActionWithCountdown(
         // TODO: we shouldn't send actions if they're loop actions
 
         if (currAction.action.type == RobotActionType.INPUT_SOUND) {
-            playSound(soundContext, index)
+            val soundName = currAction.action.data  // Saves data of sound block, AKA saves the name of sound file
+            playSound(soundContext, soundName)
         }
 
         if (index >= 0) {
@@ -558,36 +553,24 @@ private suspend fun executeActionWithCountdown(
 }
 
 //@Composable
-fun playSound(context:Context, index:Int) {
-    //val context : Context = LocalContext.current
-    //var selectedSoundIndex by remember { mutableStateOf<Int?>(null) }
-    var isPlayingSound = false //by remember { mutableStateOf(false) }
+fun playSound(context:Context, soundName: String) {
+    var isPlayingSound = false
+    robotSounds.forEachIndexed { index, (name, sound) ->
 
-    if (!isPlayingSound) {
-        //selectedSound
-        //val selectedSound = robotSounds[it].first
-        /*soundSelect?.let {
-            val selectedSound = robotSounds[it].first
-        }*/
-        //val beep = robotSounds[soundSelect].first
+        if (name == soundName) {    // Compare current block sound name to all the names in robotSounds
+            if (!isPlayingSound) {
+                val mediaPlayer = MediaPlayer.create(
+                    context,
+                    sound   // Use the sound from the robotSounds to load the media player
+                )
+                mediaPlayer.start()
+                isPlayingSound = true
 
-        if (savedSound != -1) {
-            val mediaPlayer = MediaPlayer.create(
-                context,
-                savedSound
-            )
-            mediaPlayer.start()
-
-
-            isPlayingSound = true
-
-            mediaPlayer.setOnCompletionListener {
-                isPlayingSound = false
+                mediaPlayer.setOnCompletionListener {
+                    isPlayingSound = false
+                }
             }
         }
-        //selectedSoundIndex = index
-        //}
-        //}
     }
 }
 

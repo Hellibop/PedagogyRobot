@@ -43,9 +43,6 @@ import kotlin.collections.listOf
  * the sound as a string.
  */
 
-var savedSound : Int = -1   // Find a way to NOT have this as a global variable. Only way we could make it work for now.
-val savedIndex = listOf()
-
 @Composable
 fun PopupSounds(
     onDismiss: () -> Unit,
@@ -54,7 +51,6 @@ fun PopupSounds(
     val context = LocalContext.current
     var selectedSoundIndex by remember { mutableStateOf<Int?>(null) }
     var isPlayingSound by remember { mutableStateOf(false) }
-    var soundSelect: Int = -1
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -103,7 +99,6 @@ fun PopupSounds(
                                     mediaPlayer.setOnCompletionListener {
                                         isPlayingSound = false
                                     }
-                                    soundSelect = sound
                                     selectedSoundIndex = index
                                 }
                             }
@@ -136,8 +131,6 @@ fun PopupSounds(
 
                                     onSave(selectedSound)
                                     onDismiss()
-                                    savedSound = soundSelect
-                                    savedIndex = selectedSound
                                 }
                             },
                             enabled = selectedSoundIndex != null
