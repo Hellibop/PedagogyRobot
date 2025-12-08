@@ -21,6 +21,7 @@ import {
 } from '@dnd-kit/core';
 import { ActionBlock } from './components/actionblocks/ActionBlock';
 import { DynamicActionBlock } from './components/DynamicActionBlock';
+import { LoopAction } from './dataclasses/ActionData';
 
 //preload actions
 useActionStore.getState().actions = loadActionsFromStorage();
@@ -75,8 +76,18 @@ function App() {
       addAction(data.action);
       requestAnimationFrame(() => {
         const { actions: latest, moveAction } = useActionStore.getState();
-        const newIndex = latest.length - 1;
-        if (insertIndex < newIndex) moveAction(newIndex, insertIndex);
+        // The newly appended actions occupy the last positions in the array.
+        // If data.action is a LoopAction, two new items were added: start and end.
+        if (data.action instanceof LoopAction) {
+          const newStartIndex = latest.length - 2;
+          const newEndIndex = latest.length - 1;
+          // Move the loop start into place first, then the end next to it.
+          moveAction(newStartIndex, insertIndex);
+          moveAction(newEndIndex, insertIndex + 1);
+        } else {
+          const newIndex = latest.length - 1;
+          if (insertIndex < newIndex) moveAction(newIndex, insertIndex);
+        }
       });
       return;
     }
