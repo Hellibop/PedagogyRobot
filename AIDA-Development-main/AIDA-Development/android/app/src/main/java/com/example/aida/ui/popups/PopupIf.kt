@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.aida.domain.model.IfStatementConditions
 import com.example.aida.ui.constants.moveActionColor
 import com.example.aida.ui.constants.specialActionColor
 import com.example.aida.domain.model.IfStatementConditionsType
@@ -108,7 +109,14 @@ fun PopupIf(
                             colors = androidx.compose.material3.ButtonDefaults.buttonColors(popupSaveButtonColor),
                             onClick = {
                                 selectedOptionIndex?.let { index ->
-                                    onSave(conditions[index].name)
+                                    val selectedConditionType = conditions[index]
+                                    val ifConditions = IfStatementConditions(
+                                        type = selectedConditionType,
+                                        conditionArg = "null"   // Right now there are not any functional implementations for the conditionArg on robot
+                                                                // nor any way to select a conditionArg in the popup, "null" just placeholder
+                                    )
+                                    val dataString = "[${ifConditions.type.id}, ${ifConditions.conditionArg}]"
+                                    onSave(dataString)
                                 }
                                 onDismiss()
                             },
