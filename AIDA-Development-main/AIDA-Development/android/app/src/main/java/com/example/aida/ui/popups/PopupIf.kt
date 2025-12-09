@@ -26,10 +26,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.aida.ui.constants.moveActionColor
 import com.example.aida.ui.constants.specialActionColor
+import com.example.aida.domain.model.IfStatementConditionsType
 
-// Define your options here.
-// You could also pass these as a parameter if they need to be dynamic.
-val ifOptions = kotlin.collections.listOf("Option 1", "Option 2", "Option 3")
 
 /**
  * Popup that is opened upon opening the configuration for an IF block.
@@ -42,8 +40,9 @@ fun PopupIf(
     onDismiss: () -> Unit,
     onSave: (String) -> Unit
 ) {
-    // State to track which option is selected (0, 1, or 2)
+    // State to track which option is selected
     var selectedOptionIndex by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Int?>(null) }
+    val conditions = IfStatementConditionsType.entries.toTypedArray()
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -75,18 +74,18 @@ fun PopupIf(
                         modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
                     )
 
-                    // Display the 3 options vertically
+                    // Display the options vertically
                     androidx.compose.foundation.layout.Column(
                         verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        ifOptions.forEachIndexed { index, optionText ->
-                            IfOptionButton(
-                                text = optionText,
-                                isSelected = index == selectedOptionIndex,
-                                onClick = { selectedOptionIndex = index }
-                            )
-                        }
+                        conditions.forEachIndexed { index, optionText ->
+                           IfOptionButton(
+                              text = optionText.name,
+                              isSelected = index == selectedOptionIndex,
+                              onClick = { selectedOptionIndex = index }
+                          )
+                      }
                     }
 
                     androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(24.dp))
@@ -109,7 +108,7 @@ fun PopupIf(
                             colors = androidx.compose.material3.ButtonDefaults.buttonColors(popupSaveButtonColor),
                             onClick = {
                                 selectedOptionIndex?.let { index ->
-                                    onSave(ifOptions[index])
+                                    onSave(conditions[index].name)
                                 }
                                 onDismiss()
                             },
