@@ -1,9 +1,13 @@
 import { useRef, useState, useEffect } from "react";
 import CustomScrollbar from "./CustomScrollbar";
-import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
+
+//import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
+import { useDroppable, useDndContext, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { useActionStore } from '../actionStore';
-import { restrictToHorizontalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
+
+// (not used here)
+// import { restrictToHorizontalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
 import { SortableItem } from './SortableItem';
 import { useScrollSnapping } from './hooks/useScrollSnapping';
 import { useScrollMetrics } from './hooks/useScrollMetrics';
@@ -33,11 +37,8 @@ export function ActionBlockSeqList() {
   // Ref to the scrollable container
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Tracks whether the user is interacting with a draggable item
+  // Tracks whether the user is interacting with (or pressing in) the action area
   const [isInteractingWithItem, setIsInteractingWithItem] = useState(false);
-
-  // Enables drag-to-scroll behavior unless interacting with an item
-  useDragScroll(scrollRef, isInteractingWithItem);
 
   // Hooks to support snapping and custom scroll metrics
   const { scrollMetrics } = useScrollMetrics(scrollRef);
@@ -50,9 +51,28 @@ export function ActionBlockSeqList() {
     }
   }, [setScrollRef]);
 
+  // Detect drag state once; reuse it
+  // const dnd = useDndContext();
+  // const isDraggingAnywhere = !!dnd.active;
+  // const isGridDrag = dnd.active?.data?.current?.source === 'grid';
+
+  // // Enables drag-to-scroll behavior unless interacting with an item OR any drag is active
+  // useDragScroll(scrollRef, isInteractingWithItem || isDraggingAnywhere);
+  const { active } = useDndContext();
+  const isGridDrag = active?.data?.current?.source === 'grid';
+
+  // 2) restore the old scroll-drag behavior (do not tie it to global drag state)
+  useDragScroll(scrollRef, isInteractingWithItem);
+  // Background + append droppables (attached only during grid→sequence drags)
+  const { setNodeRef: setDropZoneRef, isOver } = useDroppable({ id: 'sequence-bar-drop' });
+  const { setNodeRef: setAppendRef, isOver: isOverAppend } = useDroppable({ id: 'sequence-append' });
+
   /**
    * Handles the logic for when a drag operation ends.
    * Updates the order of actions if needed.
+   *
+   * NOTE: App.tsx owns DndContext and handles onDragEnd for both grid→sequence and in-sequence reorder.
+   * This function is kept only for historical/reference purposes (not used).
    *
    * @param {DragEndEvent} event - Event from dnd-kit.
    */
@@ -68,47 +88,37 @@ export function ActionBlockSeqList() {
 
   return (
     <div className="w-screen relative z-2">
-      {/* Scrollable container */}
       <div
         ref={scrollRef}
         className="flex flex-row h-[50vh] items-center bg-transparent w-full overflow-x-auto scrollbar-hidden"
-        style={{
-          touchAction: 'pan-x', // Allows touch scrolling horizontally
-          cursor: 'grab',
-        }}
+        style={{ touchAction: 'pan-x', cursor: 'grab' }}
       >
         {/* Left padding */}
         <div style={{ minWidth: "calc(50vw - 5rem)" }} />
 
         {/* Action blocks area */}
         <div
-          className="bg-transparent h-40 flex items-center justify-center gap-2"
+          // attach the background droppable only for grid→sequence drags
+          ref={isGridDrag ? setDropZoneRef : undefined}
+          className={`bg-transparent h-40 flex items-center justify-center gap-2 ${isGridDrag && isOver ? "bg-blue-100" : ""}`}
           onMouseEnter={() => setIsInteractingWithItem(true)}
           onMouseLeave={() => setIsInteractingWithItem(false)}
         >
-          <DndContext
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-            modifiers={[restrictToHorizontalAxis, restrictToParentElement]}
+          <SortableContext
+            items={actions.map(a => a.uid)}
+            strategy={horizontalListSortingStrategy}
           >
-            <SortableContext
-              items={actions.map(action => action.uid)}
-              strategy={horizontalListSortingStrategy}
-            >
-              <div className="flex gap-2">
-                {actions.map((action, index) => (
-                  <SortableItem 
-                    key={action.uid} 
-                    action={action} 
-                    position={index + 1} 
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+            <div className="flex gap-2">
+              {actions.map((action, index) => (
+                <SortableItem key={action.uid} action={action} position={index + 1} />
+              ))}
+            </div>
+          </SortableContext>
 
-          {/* Right-side invisible spacer for layout */}
-          <div className="w-40 h-40" />
+          {/* append sentinel — ONLY for grid drags, and on the RIGHT */}
+          {isGridDrag && (
+            <div ref={setAppendRef} className={`w-40 h-40 ${isOverAppend ? 'ring-2 ring-blue-400 rounded-md' : ''}`} />
+          )}
         </div>
 
         {/* Right padding */}

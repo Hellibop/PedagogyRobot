@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { BaseAction, LoopAction, SoundAction, GestureAction } from "./dataclasses/ActionData";
+import { BaseAction, LoopAction, SoundAction, GestureAction, VoiceAction } from "./dataclasses/ActionData";
 import { arrayMove } from '@dnd-kit/sortable';
 import { ActionDataExtended } from "./dataclasses/ActionDataExtended";
 import { loopEnd, loopStart } from "./dataclasses/ActionDefinitions";
@@ -93,7 +93,7 @@ export const useActionStore = create<ActionStoreState>((set, get) => ({
         console.log("Cannot remove actions while playing");
         return state;
       }
-      
+
       return {
         actions: state.actions.filter((action) => action.uid !== uid)
       };
@@ -109,17 +109,17 @@ export const useActionStore = create<ActionStoreState>((set, get) => ({
         console.log("Cannot update actions while playing");
         return state;
       }
-      
-      const updatedActions = state.actions.map(action => 
+
+      const updatedActions = state.actions.map(action =>
         action.uid === uid ? updatedAction : action
       );
-      
+
       return {
         actions: updatedActions,
         playing: false
       };
     });
-    
+
     get().stop();
     get().updateTime();
   },
@@ -192,9 +192,27 @@ export const useActionStore = create<ActionStoreState>((set, get) => ({
       }
 
       const snapTargets = scrollContainer.querySelectorAll('[data-snap-target]');
-      
+
       // Get current action
       const action = actions[currentIndex].action;
+
+      if (action instanceof SoundAction && action.audioFile) {
+        action.audioFile.currentTime = 0;
+        action.audioFile.play().catch((err) => console.warn(err));
+      }
+
+      if (action instanceof VoiceAction) {
+        const msg = action.message?.trim();
+        if (msg && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          try {
+            const utterance = new SpeechSynthesisUtterance(msg);
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+          } catch (err) {
+            console.warn('Failed to speak voice message', err);
+          }
+        }
+      }
 
       if (currentIndex + 1 < actions.length) {
         console.log("Next item not out of index")
@@ -217,7 +235,7 @@ export const useActionStore = create<ActionStoreState>((set, get) => ({
           // Loop completed, continue to next action
           isInLoop = false;
           iterations = -1;
-          
+
           // Check if this is the last action
           if (currentIndex === actions.length - 1) {
             console.log("End of sequence reached after loop");
@@ -229,7 +247,7 @@ export const useActionStore = create<ActionStoreState>((set, get) => ({
           if (loopStartTarget) {
             const targetScroll = loopStartTarget.offsetLeft + (loopStartTarget.offsetWidth / 2) -
               (scrollContainer.clientWidth / 2);
-              
+
             setTimeout(() => {
               scrollContainer.scrollTo({
                 left: targetScroll,
@@ -241,9 +259,9 @@ export const useActionStore = create<ActionStoreState>((set, get) => ({
           return { ...state, iterations, isInLoop, loopStartIndex };
         }
       } else if (action instanceof LoopAction && !action.isEnd) {
-          isInLoop = true;
-          iterations = action.iterations;
-          loopStartIndex = currentIndex;
+        isInLoop = true;
+        iterations = action.iterations;
+        loopStartIndex = currentIndex;
       }
 
       // Handle scrolling to the next element
@@ -273,18 +291,21 @@ export const useActionStore = create<ActionStoreState>((set, get) => ({
   },
 
   play: () => {
+    // TESTING OF AUDIO
+    var audio = new Audio('/android/app/src/main/res/raw/robot_call.mp3');
+    audio.play();
     set((state) => {
       console.log("Playing entire sequence");
-      
+
       // Lock scrolling when play starts
       const scrollContainer = state.scrollRef?.current;
       if (scrollContainer) {
         // Save the original overflow setting
         const originalOverflow = scrollContainer.style.overflow;
-        
+
         // Use CSS to disable scrolling
         scrollContainer.style.overflow = 'hidden';
-        
+
         // Add event listeners to prevent all scrolling interactions
         scrollContainer.addEventListener('wheel', preventScroll, { passive: false, capture: true });
         scrollContainer.addEventListener('touchmove', preventScroll, { passive: false, capture: true });
@@ -297,11 +318,11 @@ export const useActionStore = create<ActionStoreState>((set, get) => ({
             e.stopPropagation();
           }
         }, { passive: false, capture: true });
-        
+
         // Store the original overflow state to restore it later
         scrollContainer.dataset.originalOverflow = originalOverflow;
       }
-      
+
       return { ...state, playing: true };
     });
 
@@ -328,10 +349,10 @@ export const useActionStore = create<ActionStoreState>((set, get) => ({
     // Start the sequence
     playNextStep();
   },
-  
+
   stop: () => {
     console.log("Stopping playback");
-    
+
     // Unlock scrolling when playback stops
     const scrollContainer = get().scrollRef?.current;
     if (scrollContainer) {
@@ -341,13 +362,13 @@ export const useActionStore = create<ActionStoreState>((set, get) => ({
       scrollContainer.removeEventListener('mousedown', preventMouseDrag, { capture: true });
       scrollContainer.removeEventListener('mousemove', preventMouseDrag, { capture: true });
       scrollContainer.removeEventListener('keydown', preventScroll, { capture: true });
-      
+
       // Restore original overflow setting
       const originalOverflow = scrollContainer.dataset.originalOverflow || '';
       scrollContainer.style.overflow = originalOverflow;
       delete scrollContainer.dataset.originalOverflow;
     }
-    
+
     set({ playing: false });
   }
 }));

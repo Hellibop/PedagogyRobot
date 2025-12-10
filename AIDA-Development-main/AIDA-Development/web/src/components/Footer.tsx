@@ -1,12 +1,13 @@
-import MovementActionsGrid from "./MovementActionsGrid";
-import SpecialActionsGrid from "./SpecialActionsGrid";
-import ControlButtons from "./ControlButtons";
+import MovementActionsGrid from './MovementActionsGrid';
+import SpecialActionsGrid from './SpecialActionsGrid';
+import ControlButtons from './ControlButtons';
 
 import {
   backward,
   forward,
   inputGesture,
   inputSound,
+  inputVoice,
   left,
   longBackwards,
   longForward,
@@ -14,13 +15,13 @@ import {
   longRight,
   loopStart,
   right,
-} from "../dataclasses/ActionDefinitions";
-import { JSX } from "react";
+} from '../dataclasses/ActionDefinitions';
+import { JSX } from 'react';
 
 /**
  * Props for the Footer component.
- * 
- * @property {Function} addBlock - A callback function to add a block to the UI. 
+ *
+ * @property {Function} addBlock - A callback function to add a block to the UI.
  *                                 Typically used when an action button is clicked.
  */
 interface FooterProps {
@@ -29,18 +30,18 @@ interface FooterProps {
 
 /**
  * Footer Component
- * 
+ *
  * The Footer component serves as a control panel UI at the bottom of the screen.
  * It is divided into three areas:
- * 
+ *
  * - **Movement Actions Grid**: Contains directional and movement-related action blocks.
- * - **Special Actions Grid**: Contains non-directional or higher-level action blocks like gesture and sound input.
+ * - **Special Actions Grid**: Contains non-directional or higher-level action blocks like gesture, voice and sound input.
  * - **Control Buttons**: Contains operational controls such as play, pause & reset.
- * 
+ *
  * Layout:
  * - The footer uses a horizontal flex layout.
  * - Each section is scrollable and padded for a clean UI.
- * 
+ *
  * @param {FooterProps} props - The props for the component.
  * @returns {JSX.Element} A rendered footer with action grids and controls.
  */
@@ -71,6 +72,7 @@ export default function Footer({ addBlock }: FooterProps): JSX.Element {
             inputGesture,
             loopStart,
             inputSound,
+            inputVoice,
           ]}
         />
       </div>
