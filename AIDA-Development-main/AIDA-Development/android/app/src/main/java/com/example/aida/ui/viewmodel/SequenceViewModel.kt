@@ -70,10 +70,10 @@ class SequenceViewModel @Inject constructor(
         viewModelScope.launch {
             sequenceRepository.getActionsFlow()
                 .collect{ actionsList ->
-                _sequenceBarState.update { currentState ->
-                    currentState.copy(actions = actionsList)
+                    _sequenceBarState.update { currentState ->
+                        currentState.copy(actions = actionsList)
+                    }
                 }
-            }
         }
     }
 
@@ -182,7 +182,7 @@ class SequenceViewModel @Inject constructor(
      * Asynchronously executes all actions in the sequence from beginning to end.
      * This is a suspending function and should be called from a coroutine.
      */
-     fun executeFullSequence() {
+    fun executeFullSequence() {
         if (sequenceBarState.value.isConnected) {
             viewModelScope.launch(Dispatchers.IO) {
                 try {
@@ -297,13 +297,103 @@ class SequenceViewModel @Inject constructor(
     fun getLockedState(): Boolean {
         return _sequenceBarState.value.isLocked
     }
-
     fun toggleSelection(index: Int) {
         _sequenceBarState.update { current ->
             val set = current.selectedIndices.toMutableSet()
-            if (set.contains(index)) set.remove(index) else set.add(index)
+            val actionType = current.actions[index].action.type
+
+            fun selectRange(from: Int, to: Int) {
+                for (i in from..to) set.add(i)
+            }
+
+            fun deselectRange(from: Int, to: Int) {
+                for (i in from..to) set.remove(i)
+            }
+            when (actionType) {
+                RobotActionType.LOOP_START -> {
+                    val end = findLoopEndIndex(current.actions, index)
+                    if (set.contains(index)) {
+                        if (end != null) deselectRange(index, end)
+                        else set.remove(index)
+                    } else {
+                        if (end != null) selectRange(index, end)
+                        else set.add(index)
+                    }
+                }
+
+                RobotActionType.LOOP_END -> {
+                    val start = findLoopStartIndex(current.actions, index)
+                    if (set.contains(index)) {
+                        if (start != null) deselectRange(start, index)
+                        else set.remove(index)
+                    } else {
+                        if (start != null) selectRange(start, index)
+                        else set.add(index)
+                    }
+                }
+                else -> {
+                    if (!set.add(index)) set.remove(index)
+                }
+            }
+
             current.copy(selectedIndices = set)
         }
+    }
+
+    private fun findLoopStartIndex(actions: List<UIAction>, endIndex: Int): Int? {
+        var level = 1
+        for (i in endIndex - 1 downTo 0) {
+            when (actions[i].action.type) {
+                RobotActionType.LOOP_END -> level++
+                RobotActionType.LOOP_START -> level--
+                else -> {}
+            }
+            if (level == 0) return i
+        }
+        return null
+    }
+
+
+    private fun findLoopEndIndex(actions: List<UIAction>, startIndex: Int): Int? {
+        var level = 1
+        for (i in startIndex + 1 until actions.size) {
+            when (actions[i].action.type) {
+                RobotActionType.LOOP_START -> level++
+                RobotActionType.LOOP_END -> level--
+                else -> {}
+            }
+            if (level == 0) return i
+        }
+        return null
+    }
+
+    fun getSelectedExecutionList(): List<Int> {
+        val state = _sequenceBarState.value
+        val actions = state.actions
+        val selected = state.selectedIndices.sorted()
+        val result = mutableListOf<Int>()
+
+        var i = 0
+        while (i < selected.size) {
+            val index = selected[i]
+            val actionType = actions[index].action.type
+
+            if (actionType == RobotActionType.LOOP_START) {
+                val end = findLoopEndIndex(actions, index)
+                if (end != null && end in selected) {
+                    val iterations = actions[index].iterations
+                    val loopRange = (index..end).toList()
+                    repeat(iterations) { result.addAll(loopRange)}
+
+                    i = selected.indexOf(end) + 1
+                    continue
+                }
+            }
+
+            result.add(index)
+            i++
+        }
+        return result
     }
 
     fun toggleSelecting() {

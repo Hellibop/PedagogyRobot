@@ -228,17 +228,6 @@ fun SequenceTabPage(
                     snapToClosestAction = snapToClosestAction
                 )
 
-                // Clear Sequence button
-                ClearSequenceButton(
-                    viewModel,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .offset(x = 10.dp, y = 10.dp)
-                        .size(135.dp, 45.dp)
-                        .zIndex(2f),
-                    snapToClosestAction = snapToClosestAction
-                )
-
 
                 Button(
                     onClick = { viewModel.toggleSelecting() },
@@ -395,8 +384,6 @@ fun SequenceTabPage(
                     }
                 }
             }
-
-            // USER BUTTONS: Play, stop, step, etc.
             // USER BUTTONS: Play, stop, step, etc.
             UserButtons(
                 onClickPlay = {
@@ -404,11 +391,13 @@ fun SequenceTabPage(
 
                     // If selection mode is active but nothing is selected do nothing
                     if (uiState.isSelecting) {
-                        if (selected.isEmpty()) return@UserButtons
+                        val execList = viewModel.getSelectedExecutionList()
+                        if (execList.isEmpty()) return@UserButtons
+
                         viewModel.setState(UserInteractionState.PLAYING)
                         currentPlayJob = coroutineScope.launch {
-                            for ((idx, currentIndex) in selected.withIndex()) {
-                                val nextIndex = selected.getOrNull(idx + 1)
+                            for ((idx, currentIndex) in execList.withIndex()) {
+                                val nextIndex = execList.getOrNull(idx + 1)
                                 executeActionWithCountdown(
                                     index = currentIndex,
                                     coroutineScope = coroutineScope,
@@ -423,6 +412,7 @@ fun SequenceTabPage(
                         }
                         return@UserButtons
                     }
+
 
                     // TODO: avoid this code duplication
                     viewModel.setState(UserInteractionState.PLAYING)
