@@ -330,7 +330,11 @@ fun SequenceTabPage(
                             .fillMaxHeight()
                     ) {
                         items(
-                            items = RobotActionType.entries.filter { it.isSpecial && it != RobotActionType.LOOP_END },
+                            items = RobotActionType.entries.filter {
+                                it.isSpecial
+                                        && it != RobotActionType.LOOP_END
+                                        && it != RobotActionType.IF_ELSE
+                                        && it != RobotActionType.IF_END },
                             itemContent = { actionType ->
                                 ActionButton(
                                     actionType = actionType,
