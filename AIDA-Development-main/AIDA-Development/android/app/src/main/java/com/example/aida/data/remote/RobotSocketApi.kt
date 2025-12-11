@@ -155,22 +155,22 @@ class RobotSocketApi @Inject constructor(
      * @param x The x value of the joystick - float value between -1 and 1
      * @param y The y value of the joystick - float value between -1 and 1
      */
+
     override suspend fun sendJoystickData(x : Float, y : Float) {
 
         if(x < -1 || x > 1 || y < -1 || y > 1){
             throw IllegalArgumentException("Joystick values must be between -1 and 1")
         }
 
-        val body = ByteBuffer.allocate(MessageType.JOYSTICK.size)
-            .putFloat(x)
-            .putFloat(y)
-            .array()
+            val body = ByteBuffer.allocate(MessageType.JOYSTICK.size)
+                .putFloat(x)
+                .putFloat(y)
+                .array()
 
-        val header = createHeader(MessageType.JOYSTICK.id, body.size)
-
-        socketManger.send(ConnectionId.JOYSTICK, header)
-        socketManger.send(ConnectionId.JOYSTICK, body)
-    }
+            val header = createHeader(MessageType.JOYSTICK.id, body.size)
+                socketManger.send(ConnectionId.JOYSTICK, header)
+                socketManger.send(ConnectionId.JOYSTICK, body)
+        }
 
     /**
      * What we send to AIDA (message body):

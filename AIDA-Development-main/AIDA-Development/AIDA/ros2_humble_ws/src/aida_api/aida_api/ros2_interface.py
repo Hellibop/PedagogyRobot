@@ -20,6 +20,8 @@ import json
 
 import serial
 
+import ros2_humble_ws.src.aida_api.aida_api.if_else_conditions_handler as cond_handler
+
 # from lidar_data.msg import LiDAR
 
 # Socket Constants
@@ -98,6 +100,9 @@ class actionNames(IntEnum):
     LOOP_START = 12
     LOOP_END = 13
     INPUT_SOUND = 14
+    IF_START = 15
+    IF_ELSE = 16
+    IF_END = 17
 
 class Instruction:
     ON = 1
@@ -409,6 +414,9 @@ class InterfaceNode(Node):
 
         This method continuously publishes joystick data from the joystick queue.
         """
+
+        reset_sent = False      # flag to ensure that msg is only sent once
+
         while True:
             if self.joystick_publisher_event.is_set():
                 break
@@ -416,10 +424,20 @@ class InterfaceNode(Node):
                 msg = self.joystick_queue.get(block=False)
             except queue.Empty:
                 msg = None
+
             if self.joystick_publisher_event.is_set():
                 break
+
             if msg != None:
                 self.joystick_pub.publish(msg)
+                reset_sent = False      # reset flag if new msg's arrive.
+            else:
+                if not reset_sent:
+                    reset_msg = self.to_joystick_msg((0,0))     # create reset msg
+                    self.joystick_pub.publish(reset_msg)
+                    reset_sent = True
+
+
 
     def start_server(self):
         """
@@ -721,6 +739,7 @@ class InterfaceNode(Node):
     SequenceClient.kt in the same folder has also a large explanation of what we exactly send here.
     """
     def handle_sequence(self, data, client):
+        # TODO Somewhere here responsiv stop can be fixed maybe?!
         self.sequence_stop_event.clear()
         self.sequence_pause_event.clear()
         self.get_logger().info(f"Server| Received sequence data: {data}")
@@ -741,7 +760,7 @@ class InterfaceNode(Node):
             while i < len(data):
                 action_data = struct.unpack("!H", data[i:i+2])[0]
                 i += 2
-                if action_data == actionNames.INPUT_GESTURE or action_data == actionNames.INPUT_SOUND or action_data == actionNames.INPUT_VOICE or action_data == actionNames.LOOP_START:
+                if action_data in [actionNames.INPUT_GESTURE, actionNames.INPUT_SOUND, actionNames.INPUT_VOICE, actionNames.LOOP_START, actionNames.IF_START]:
                     data_length = struct.unpack("!H", data[i:i+2])[0]
                     i += 2
                     data_utf8 = data[i:i+data_length].decode('utf-8')
@@ -820,6 +839,28 @@ class InterfaceNode(Node):
                 else:
                     loop_done = True
                     i += 1
+            
+            elif action == actionNames.IF_START:
+                condition_result = cond_handler.if_else_condition_handler(extra_data)
+                if condition_result:
+                    self.get_logger().info(f"Sequence| Condition met at IF_START, executing true block.")
+                    i += 1
+                else:
+                    self.get_logger().info(f"Sequence| Condition not met at IF_START, skipping to IF_ELSE or IF_END.")
+                    # Nested if blocks will probably fail here... however app does not support nesting.
+                    while i < len(ids) and ids[i] not in [actionNames.IF_ELSE, actionNames.IF_END]:
+                        i += 1
+
+            elif action == actionNames.IF_ELSE:
+                self.get_logger().info(f"Sequence| Skipping false block to IF_END.")
+                while i < len(ids) and ids[i] != actionNames.IF_END:
+                    i += 1
+                i += 1
+
+            elif action == actionNames.IF_END:
+                self.get_logger().info(f"Sequence| Reached IF_END, continuing execution.")
+                i += 1
+
 
             else:
                 self.get_logger().info(f"Sequence| Executing action {actionNames(action).name} with extra data: {extra_data}")

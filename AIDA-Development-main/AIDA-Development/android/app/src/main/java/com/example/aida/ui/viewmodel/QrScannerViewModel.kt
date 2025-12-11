@@ -8,6 +8,7 @@ import com.example.aida.domain.repository.SequenceRepository
 import com.example.aida.ui.component.UIAction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import java.net.URLDecoder
 
 /**
  * ViewModel for the QR Code Scanner screen.
@@ -38,8 +39,30 @@ class QrScannerViewModel @Inject constructor(
         val res: MutableList<UIAction> = mutableListOf<UIAction>()
 
         for (ac in splitted) {
+                if (ac.contains(":")) {
+                    val parts = ac.split(":", limit = 2)
+                    val codePart = parts[0]
+                    val messagePart = URLDecoder.decode(parts[1], "UTF-8")
+                    when (codePart) {
+                        "ipv" -> {
+                            val uiAction = UIAction(RobotActionType.INPUT_VOICE)
+                            uiAction.action.data = messagePart  // set the spoken phrase
+                            res.add(uiAction)
+                        }
+                        // handle other codes with payloads here if needed
+                        else -> {
+                            Log.d("QrScannerViewModel", "Unknown code with payload: $ac")
+                        }
+                    }
+                    continue  // skip the regular when() mapping
+                }
+
+
+            
+                    //checking for colon-delimit payload, ergo a voice block.
             when (ac) {
 
+            
                 // Mapping for standard, non-loop actions.
                 "lfwd" -> res.add(UIAction(RobotActionType.FORWARDS_LONG))
                 "lbwd" -> res.add(UIAction(RobotActionType.BACKWARDS_LONG))

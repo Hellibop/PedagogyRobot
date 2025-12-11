@@ -2,6 +2,8 @@ package com.example.aida.ui.page
 
 import android.content.ClipDescription
 import android.media.MediaPlayer
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -10,6 +12,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
+import androidx.compose.foundation.gestures.stopScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.aida.R
@@ -165,8 +169,6 @@ fun SequenceTabPage(
         }
     }
 
-
-
     // Watch for the scroll state change
     LaunchedEffect(scrollState.isScrollInProgress) {
         // Check if the state changed from true to false
@@ -226,6 +228,35 @@ fun SequenceTabPage(
                         .zIndex(2f),
                     snapToClosestAction = snapToClosestAction
                 )
+
+                // Clear Sequence button
+                ClearSequenceButton(
+                    viewModel,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(x = 10.dp, y = 10.dp)
+                        .size(135.dp, 45.dp)
+                        .zIndex(2f),
+                    snapToClosestAction = snapToClosestAction
+                )
+
+
+                Button(
+                    onClick = { viewModel.toggleSelecting() },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(x = 155.dp, y = 10.dp)
+                        .size(135.dp, 45.dp)
+                        .zIndex(2f)
+                ) {
+                    Text(
+                        text = if (!uiState.isSelecting) "Select blocks" else "Exit",
+                        style = androidx.compose.ui.text.TextStyle(
+                            fontSize = 13.sp,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Normal
+                        )
+                    )
+                }
 
                 //Button to invoke the QR-scanner to import code from the webapp.
                 ImportButton(
@@ -341,7 +372,11 @@ fun SequenceTabPage(
                             .fillMaxHeight()
                     ) {
                         items(
-                            items = RobotActionType.entries.filter { it.isSpecial && it != RobotActionType.LOOP_END },
+                            items = RobotActionType.entries.filter {
+                                it.isSpecial
+                                        && it != RobotActionType.LOOP_END
+                                        && it != RobotActionType.IF_ELSE
+                                        && it != RobotActionType.IF_END },
                             itemContent = { actionType ->
                                 ActionButton(
                                     actionType = actionType,
@@ -369,8 +404,38 @@ fun SequenceTabPage(
             // USER BUTTONS: Play, stop, step, etc.
             UserButtons(
                 onClickPlay = {
-                    viewModel.setState(UserInteractionState.PLAYING)
+                    val selected = uiState.selectedIndices.sorted()
+
+                    // If selection mode is active but nothing is selected do nothing
+                    if (uiState.isSelecting) {
+                        val execList = viewModel.getSelectedExecutionList()
+                        if (execList.isEmpty()) return@UserButtons
+
+                        viewModel.setState(UserInteractionState.PLAYING)
+                        currentPlayJob = coroutineScope.launch {
+                            for ((idx, currentIndex) in execList.withIndex()) {
+                                val currentActionTMP = uiState.actions[currentIndex]
+                                val nextIndex = execList.getOrNull(idx + 1)
+                                executeActionWithCountdown(
+                                    soundContext,
+                                    currentActionTMP,
+                                    index = currentIndex,
+                                    coroutineScope = coroutineScope,
+                                    viewModel = viewModel,
+                                    scrollState = scrollState,
+                                    stepLength = stepDistanceInPixels,
+                                    nextIndex = nextIndex
+                                )
+                            }
+
+                            viewModel.setState(UserInteractionState.STOPPED)
+                        }
+                        return@UserButtons
+                    }
+
+
                     // TODO: avoid this code duplication
+                    viewModel.setState(UserInteractionState.PLAYING)
                     currentPlayJob = coroutineScope.launch {
                         if (currentIndex == uiState.actions.size) {
                             // Scroll to beginning if we are on the last block
@@ -507,7 +572,6 @@ fun SequenceTabPage(
  * @param scrollState The scroll state of the sequence bar.
  * @param stepLength The distance in pixels that each step should be.
  */
-
 private suspend fun executeActionWithCountdown(
     soundContext: Context,
     currAction: UIAction,
@@ -516,6 +580,7 @@ private suspend fun executeActionWithCountdown(
     viewModel: SequenceViewModel,
     scrollState: ScrollState,
     stepLength: Int,
+    nextIndex: Int? = null
 ) {
     val task = coroutineScope.launch {
         // TODO: handle this in a better way, without an if check on index
@@ -540,8 +605,9 @@ private suspend fun executeActionWithCountdown(
         }
 
         if (viewModel.getState() != UserInteractionState.STOPPED) {
+            val targetIndex = nextIndex ?: index + 1
             animateScrollToIndex(
-                index + 1,
+                targetIndex,
                 scrollState,
                 stepLength,
                 tween(durationMillis = 1000, easing = LinearEasing)
