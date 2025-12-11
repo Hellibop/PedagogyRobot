@@ -1,1 +1,17 @@
 Here we will explain our reasoning and why we did the thing we did, specifically for parts of code which still needs work.
+
+## IF-ELSE
+### Basics
+IF-ELSE blocks are implemented like the LOOP blocks, one **start block** where u can select a value and a **end block**. For the IF-ELSE blocks there is also an **else block** in between the start and end blocks for if the start blocks condition(value) isn't passed. These blocks are defined for the android app in [RobotActionType.kt](./AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/domain/model/RobotActionType.kt) and [ros2_interface.py](./AIDA-Development-main/AIDA-Development/AIDA/ros2_humble_ws/src/aida_api/aida_api/ros2_interface.py) for the robot.
+
+### Conditions
+Blocks are made into an [RobotAction.kt](./AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/domain/model/RobotAction.kt) object, and since the IF-ELSE blocks are defined as special in [RobotActionType.kt](./AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/domain/model/RobotActionType.kt) the **data** string for the object. The **data** string can be anything since each special block is handled seperatly. In the case of the IF-ELSE blocks the **data** string contains a condition type and condition argument in the format of [condition_type : int, condition_arg : string]. Condition types are defined in [IfStatementConditionsType.kt](./AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/domain/model/IfStatementConditionsType.kt) on the android side and [if_else_conditions_handler.py](./AIDA-Development-main/AIDA-Development/AIDA/ros2_humble_ws/src/aida_api/aida_api/if_else_conditions_handler.py) for the robot. Just like the blocks if they are defined as special in [IfStatementConditionsType.kt](./AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/domain/model/IfStatementConditionsType.kt) they **should** make use of the condtion_arg (They don't right now hehe).  
+
+### Questionable design
+When construction the **data** string for IF-ELSE the type and arg is made into a [IfStatementConditions.kt](./AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/domain/model/IfStatementConditions.kt) object for type checking and then into the formatted string. This could be seen as redundant and can therefore be removed if you see no use for it.
+
+### Robot
+More on the robot side the logic for how the different conditions should be evaluated is not implemented what so ever. The main logic in [ros2_interface.py](./AIDA-Development-main/AIDA-Development/AIDA/ros2_humble_ws/src/aida_api/aida_api/ros2_interface.py) checks with **if_else_condition_handler** defined in [if_else_conditions_handler.py](./AIDA-Development-main/AIDA-Development/AIDA/ros2_humble_ws/src/aida_api/aida_api/if_else_conditions_handler.py), the **data** string is passed to the funciton and depending on if it returns true or false the correct sequence of blocks are processed. 
+
+### Problems
+Since we didn't have access to the robot for testing we do not know if everyting will be sent and processed correctly. And again the android app does not have the functionality to define the **condition_arg** and is set to "Null" in [PopupIf.kt](./AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/ui/popups/PopupIf.kt). The conditions themselfs are again not implemented on the robot side and only retrun staticly true or false.
