@@ -1,5 +1,6 @@
 package com.example.aida.ui.popups
 
+import android.R
 import android.media.MediaPlayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.aida.ui.constants.moveActionColor
 import com.example.aida.ui.constants.specialActionColor
+import kotlin.collections.listOf
 
 /**
  * Popup that displays a selection of sounds to pick. Called when opening the configuration
@@ -40,6 +42,7 @@ import com.example.aida.ui.constants.specialActionColor
  * @param onSave Callback that is called upon saving the sound. Gets called with the name of
  * the sound as a string.
  */
+
 @Composable
 fun PopupSounds(
     onDismiss: () -> Unit,
@@ -96,7 +99,6 @@ fun PopupSounds(
                                     mediaPlayer.setOnCompletionListener {
                                         isPlayingSound = false
                                     }
-
                                     selectedSoundIndex = index
                                 }
                             }
@@ -141,6 +143,7 @@ fun PopupSounds(
         }
     }
 }
+
 
 @Composable
 private fun SoundButton(

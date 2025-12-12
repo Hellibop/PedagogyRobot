@@ -1,6 +1,7 @@
 package com.example.aida.ui.page
 
 import android.content.ClipDescription
+import android.media.MediaPlayer
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.animation.core.AnimationSpec
@@ -42,12 +43,14 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.aida.R
 import com.example.aida.domain.model.RobotActionType
 import com.example.aida.ui.component.ActionButton
 import com.example.aida.ui.component.ClearSequenceButton
@@ -66,6 +69,10 @@ import com.example.aida.ui.constants.sequenceTabIdleColor
 import com.example.aida.ui.constants.sequenceTabPlayingColor
 import com.example.aida.ui.viewmodel.SequenceViewModel
 import com.example.aida.ui.viewmodel.UserInteractionState
+
+import android.content.Context
+import com.example.aida.ui.component.UIAction
+import com.example.aida.ui.popups.robotSounds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -180,6 +187,11 @@ fun SequenceTabPage(
             viewModel.resetAllDurations()
         }
     }
+
+
+    // USED TO TRACK LOCAL CONTEXT FOR USE OF MEDIA PLAYER IN PLAY SOUND (COMPOSABLE)
+    val soundContext : Context = LocalContext.current
+
 
     // SEQUENCE BAR
     Column(
@@ -388,6 +400,7 @@ fun SequenceTabPage(
                     }
                 }
             }
+
             // USER BUTTONS: Play, stop, step, etc.
             UserButtons(
                 onClickPlay = {
@@ -401,8 +414,11 @@ fun SequenceTabPage(
                         viewModel.setState(UserInteractionState.PLAYING)
                         currentPlayJob = coroutineScope.launch {
                             for ((idx, currentIndex) in execList.withIndex()) {
+                                val currentActionTMP = uiState.actions[currentIndex]
                                 val nextIndex = execList.getOrNull(idx + 1)
                                 executeActionWithCountdown(
+                                    soundContext,
+                                    currentActionTMP,
                                     index = currentIndex,
                                     coroutineScope = coroutineScope,
                                     viewModel = viewModel,
@@ -465,6 +481,8 @@ fun SequenceTabPage(
 
                             val task = launch {
                                 executeActionWithCountdown(
+                                    soundContext,               // Context in order to work with sound
+                                    currentAction,  // Save current action in order to check what sound should play
                                     currentIndex,
                                     coroutineScope,
                                     viewModel,
@@ -501,9 +519,11 @@ fun SequenceTabPage(
                                     currentIndex = 0
                                 }.join()
                             }
-
+                            val currentAction = uiState.actions[currentIndex]
                             val task = launch {
                                 executeActionWithCountdown(
+                                    soundContext,
+                                    currentAction,
                                     currentIndex,
                                     coroutineScope,
                                     viewModel,
@@ -553,6 +573,8 @@ fun SequenceTabPage(
  * @param stepLength The distance in pixels that each step should be.
  */
 private suspend fun executeActionWithCountdown(
+    soundContext: Context,
+    currAction: UIAction,
     index: Int,
     coroutineScope: CoroutineScope,
     viewModel: SequenceViewModel,
@@ -563,6 +585,12 @@ private suspend fun executeActionWithCountdown(
     val task = coroutineScope.launch {
         // TODO: handle this in a better way, without an if check on index
         // TODO: we shouldn't send actions if they're loop actions
+
+        if (currAction.action.type == RobotActionType.INPUT_SOUND) {
+            val soundName = currAction.action.data  // Saves data of sound block, AKA saves the name of sound file
+            playSound(soundContext, soundName)
+        }
+
         if (index >= 0) {
             viewModel.executeAction(index)
 
@@ -585,10 +613,31 @@ private suspend fun executeActionWithCountdown(
                 tween(durationMillis = 1000, easing = LinearEasing)
             )
         }
-
     }
 
     task.join()
+}
+
+//@Composable
+fun playSound(context:Context, soundName: String) {
+    var isPlayingSound = false
+    robotSounds.forEachIndexed { index, (name, sound) ->
+
+        if (name == soundName) {    // Compare current block sound name to all the names in robotSounds
+            if (!isPlayingSound) {
+                val mediaPlayer = MediaPlayer.create(
+                    context,
+                    sound   // Use the sound from the robotSounds to load the media player
+                )
+                mediaPlayer.start()
+                isPlayingSound = true
+
+                mediaPlayer.setOnCompletionListener {
+                    isPlayingSound = false
+                }
+            }
+        }
+    }
 }
 
 /**
