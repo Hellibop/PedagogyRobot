@@ -13,5 +13,21 @@ When construction the **data** string for IF-ELSE the type and arg is made into 
 ### Robot
 More on the robot side the logic for how the different conditions should be evaluated is not implemented what so ever. The main logic in [ros2_interface.py](./AIDA-Development-main/AIDA-Development/AIDA/ros2_humble_ws/src/aida_api/aida_api/ros2_interface.py) checks with **if_else_condition_handler** defined in [if_else_conditions_handler.py](./AIDA-Development-main/AIDA-Development/AIDA/ros2_humble_ws/src/aida_api/aida_api/if_else_conditions_handler.py), the **data** string is passed to the funciton and depending on if it returns true or false the correct sequence of blocks are processed. 
 
+### UI
+In [RobotActionType.kt](./AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/domain/model/RobotActionType.kt) we defined the new feature IF/ELSE as an available action type. In [ActionData.kt](./AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/ui/component/ActionsData.kt) you can define UI **name** and **icon**. 
+[SequenceTabPage.kt](./AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/ui/page/SequenceTabPage.kt) is used to define ELSE and IF_END in the same way as LOOP_END where the blocks are grouped together so that all is created when you press IF and LOOP.
+In [SequenceBar.kt](AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/ui/component/SequenceBar.kt) we defined what should appear once you press the setting button on the IF-block.
+We also created a new file [PopupIf.kt](AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/ui/popups/PopupIf.kt) in which defines what happens in the popup setting button once it is pressed.
 ### Problems
 Since we didn't have access to the robot for testing we do not know if everyting will be sent and processed correctly. And again the android app does not have the functionality to define the **condition_arg** and is set to "Null" in [PopupIf.kt](./AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/ui/popups/PopupIf.kt). The conditions themselfs are again not implemented on the robot side and only retrun staticly true or false.
+
+## Joystick
+### Initial bug report
+The joystick had a bug in which it did **not reset** to default position upon release. This meant it kept giving the robot information even after the finger pressing on the joystick was released.
+
+### Solution
+We implemented a **flag** in [ros2_interface.py](./AIDA-Development-main/AIDA-Development/AIDA/ros2_humble_ws/src/aida_api/aida_api/ros2_interface.py) which tracks the queue of movement requests for the robot. Whenever the queue is empty, we drop the flag and send a **reset request** in which *should* reset the joystick.
+
+### Problem
+This code has **not been tested** due to the lack of hardware available. Since there was no robot to test this on, we cannot confirm that it works as intended. It is important that this feature is tested once a robot is available.
+
