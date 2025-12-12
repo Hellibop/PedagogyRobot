@@ -31,3 +31,32 @@ We implemented a **flag** in [ros2_interface.py](./AIDA-Development-main/AIDA-De
 ### Problem
 This code has **not been tested** due to the lack of hardware available. Since there was no robot to test this on, we cannot confirm that it works as intended. It is important that this feature is tested once a robot is available.
 
+
+## Selection Mode
+
+### Overview
+Selection Mode allows the user to choose specific blocks from the sequence and run only those selected actions. This is an alternative to running the full sequence.  
+The feature integrates with the existing sequence system without modifying execution logic inside the repository.
+
+### Entering and Exiting Selection Mode
+Triggered via the Select Blocks button in the UI.  
+When activated:  
+`isSelecting = true`  
+When deactivated all selections are cleared and the UI returns to normal behaviour.
+
+### Selecting and Deselecting Blocks
+When the user taps a block while Selection Mode is active the block’s index is toggled inside `selectedIndices`. Multiple blocks may be selected and when a block is selected it is highlighted as green.  
+Execution then uses only the selected actions, handled by `getActionsToRun()` (in `SequenceViewModel.kt`). If no blocks are selected, the full sequence is used (default behavior). When the user presses the play button as usual then only the blocks that are selected are executed.
+
+### Special Handling for Loop Blocks
+Loop blocks (`LOOP_START` and `LOOP_END`) act as a logical pair in the sequence.  
+When selecting either a loop start or loop end the system automatically selects the matching partner and also the blocks between them. This logic does not modify how loops are executed by the repository.
+
+### What Needs to Be Tested
+Since we didn’t have access to the actual robot, we couldn’t test whether the selection mode really sends only the chosen blocks to the robot and runs them correctly. This still needs to be tested later.  
+Also, the extra logic for handling loop start/end was added pretty quickly, so it hasn’t been fully tested either. It seems to work for the basic cases, but more testing is definitely needed.
+
+### Files Changed
+**SequenceTabPage.kt:** Added UI logic for entering/exiting selection mode and passing selection events to the ViewModel.  
+**SequenceViewModel.kt:** Added all selection mode state, selection toggling, and the logic for handling loop ranges.  
+**SequenceBar.kt:** Updated block UI so each block can show “selected” state and trigger selection when tapped.
