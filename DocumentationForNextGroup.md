@@ -60,3 +60,11 @@ Also, the extra logic for handling loop start/end was added pretty quickly, so i
 **SequenceTabPage.kt:** Added UI logic for entering/exiting selection mode and passing selection events to the ViewModel.  
 **SequenceViewModel.kt:** Added all selection mode state, selection toggling, and the logic for handling loop ranges.  
 **SequenceBar.kt:** Updated block UI so each block can show “selected” state and trigger selection when tapped.
+
+
+## Sound
+### Basics
+The sound implementation for AIDA has been implemented into both the web and application. Once the sound block is selected a popup appears where the user may select a sound. The selected sound is then played. These blocks are implemented for the web in [SoundBlockSeq.tsx](./AIDA-Development-main/AIDA-Development/web/src/components/actionblocks/SoundBlockSeq.tsx), [ActionData.tsx](./AIDA-Development-main/AIDA-Development/web/src/dataclasses/ActionData.tsx),and for the app in [RobotActionType.kt](./AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/domain/model/RobotActionType.kt) and [PopupSounds.kt](./AIDA-Development-main/AIDA-Development/web/src/PopupSounds.kt). When the sequence is played, the selected sounds play once the sequence reaches the sound blocks, implemented in [actionStore.tsx](./AIDA-Development-main/AIDA-Development/web/src/actionStore.tsx) for the web and [SequenceTabPage.kt](./AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/ui/page/SequenceTabPage.kt) for the app. 
+
+### Audio files
+The audio files for the web and app respectively are located in [audio](./AIDA-Development-main/AIDA-Development/web/src/audio) and [raw](./AIDA-Development-main/AIDA-Development/android/app/src/main/res/raw). The implemented code for the audio files is located in [ActionDefinitions.tsx](./AIDA-Development-main/AIDA-Development/web/src/dataclasses/ActionDefinitions.tsx) for web and [PopupData.kt](./AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/ui/popups/PopupData.kt) for the app. 
