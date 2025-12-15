@@ -68,3 +68,15 @@ The sound implementation for AIDA has been implemented into both the web and app
 
 ### Audio files
 The audio files for the web and app respectively are located in [audio](./AIDA-Development-main/AIDA-Development/web/src/audio) and [raw](./AIDA-Development-main/AIDA-Development/android/app/src/main/res/raw). The implemented code for the audio files is located in [ActionDefinitions.tsx](./AIDA-Development-main/AIDA-Development/web/src/dataclasses/ActionDefinitions.tsx) for web and [PopupData.kt](./AIDA-Development-main/AIDA-Development/android/app/src/main/java/com/example/aida/ui/popups/PopupData.kt) for the app. 
+
+
+## Drag & Drop Web
+
+### Basics  
+We’ve pulled the `<DndContext>` up from [`SequenceBar.tsx`](./AIDA-Development-main/AIDA-Development/web/src/components/SequenceBar.tsx) into [`App.tsx`](./AIDA-Development-main/AIDA-Development/web/src/App.tsx) so all drag logic lives in one place.  That central handle now knows whether you’re dragging a block out of a footer grid or just shuffling things inside the sequence.  Each button in the movement and special grids is wrapped in `useDraggable`, and the drag data includes a `source` field (`{ source: 'grid' }`) so the code can tell a grid drag from an in‑sequence reorder.  When it’s a grid drag, the app appends the new block and then shifts it into the right spot; when it’s a reorder, it just swaps positions.
+
+### Loop Handling  
+Loop actions actually create two blocks — a start and an end.  Before, dropping a loop left the start hanging out at the end of the list.  The current logic appends both pieces and then moves them together into the drop position so they stay adjacent, eliminating stray loop starts.
+
+### Current State  
+It’s functional, but the drag experience still isn’t totally seamless.  When you drag an item from a grid into the sequence, you’re always in “outside” drag mode until you let go.  A future improvement would be to have the drag switch modes as soon as you enter the sequence area, making in‑sequence placement feel smoother and more intuitive.
