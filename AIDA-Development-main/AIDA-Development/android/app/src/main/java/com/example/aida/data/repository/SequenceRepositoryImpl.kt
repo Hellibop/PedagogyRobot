@@ -1,5 +1,6 @@
 package com.example.aida.data.repository
 
+import kotlinx.coroutines.flow.map
 import android.util.Log
 import com.example.aida.domain.model.RobotActionType
 import com.example.aida.domain.remote.RobotApi
@@ -84,6 +85,15 @@ class SequenceRepositoryImpl @Inject constructor(
 
             copy.add(loopEnd)
         }
+        if (type == RobotActionType.IF_START) {
+            // If the action added was an IF_START, also add an IF_ELSE and an IF_END
+            val ifElse = UIAction(RobotActionType.IF_ELSE)
+            val ifEnd = UIAction(RobotActionType.IF_END)
+
+            copy.add(ifElse)
+            copy.add(ifEnd)
+        }
+
 
         _actionsFlow.value = copy.toList()
     }

@@ -19,9 +19,12 @@ enum class RobotActionType(val id: Short, val isSpecial: Boolean, val duration: 
     TURN_RIGHT_LONG(11, false, 2.0),
     LOOP_START(12, true, 0.0),
     LOOP_END(13, true, 0.0),
+    IF_START(15, true, 0.0),
+    IF_ELSE(16, true, 0.0),
+    IF_END(17, true, 0.0),
     INPUT_GESTURE(6, true, 1.0),
     INPUT_VOICE(7, true, 1.0),
-    INPUT_SOUND(14, true, 1.0);
+    INPUT_SOUND(14, true, 1.5);
 
     companion object {
         fun fromId(id: Short): RobotActionType = entries.find { it.id == id }?: FORWARDS

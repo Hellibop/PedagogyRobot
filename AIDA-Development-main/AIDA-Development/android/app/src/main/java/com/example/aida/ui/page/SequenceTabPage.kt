@@ -1,6 +1,9 @@
 package com.example.aida.ui.page
 
 import android.content.ClipDescription
+import android.media.MediaPlayer
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -40,11 +43,14 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.aida.R
 import com.example.aida.domain.model.RobotActionType
 import com.example.aida.ui.component.ActionButton
 import com.example.aida.ui.component.ClearSequenceButton
@@ -63,6 +69,10 @@ import com.example.aida.ui.constants.sequenceTabIdleColor
 import com.example.aida.ui.constants.sequenceTabPlayingColor
 import com.example.aida.ui.viewmodel.SequenceViewModel
 import com.example.aida.ui.viewmodel.UserInteractionState
+
+import android.content.Context
+import com.example.aida.ui.component.UIAction
+import com.example.aida.ui.popups.robotSounds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -159,8 +169,6 @@ fun SequenceTabPage(
         }
     }
 
-
-
     // Watch for the scroll state change
     LaunchedEffect(scrollState.isScrollInProgress) {
         // Check if the state changed from true to false
@@ -179,6 +187,11 @@ fun SequenceTabPage(
             viewModel.resetAllDurations()
         }
     }
+
+
+    // USED TO TRACK LOCAL CONTEXT FOR USE OF MEDIA PLAYER IN PLAY SOUND (COMPOSABLE)
+    val soundContext : Context = LocalContext.current
+
 
     // SEQUENCE BAR
     Column(
@@ -215,6 +228,35 @@ fun SequenceTabPage(
                         .zIndex(2f),
                     snapToClosestAction = snapToClosestAction
                 )
+
+                // Clear Sequence button
+                ClearSequenceButton(
+                    viewModel,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(x = 10.dp, y = 10.dp)
+                        .size(135.dp, 45.dp)
+                        .zIndex(2f),
+                    snapToClosestAction = snapToClosestAction
+                )
+
+
+                Button(
+                    onClick = { viewModel.toggleSelecting() },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(x = 155.dp, y = 10.dp)
+                        .size(135.dp, 45.dp)
+                        .zIndex(2f)
+                ) {
+                    Text(
+                        text = if (!uiState.isSelecting) "Select blocks" else "Exit",
+                        style = androidx.compose.ui.text.TextStyle(
+                            fontSize = 13.sp,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Normal
+                        )
+                    )
+                }
 
                 //Button to invoke the QR-scanner to import code from the webapp.
                 ImportButton(
@@ -330,7 +372,11 @@ fun SequenceTabPage(
                             .fillMaxHeight()
                     ) {
                         items(
-                            items = RobotActionType.entries.filter { it.isSpecial && it != RobotActionType.LOOP_END },
+                            items = RobotActionType.entries.filter {
+                                it.isSpecial
+                                        && it != RobotActionType.LOOP_END
+                                        && it != RobotActionType.IF_ELSE
+                                        && it != RobotActionType.IF_END },
                             itemContent = { actionType ->
                                 ActionButton(
                                     actionType = actionType,
@@ -358,8 +404,38 @@ fun SequenceTabPage(
             // USER BUTTONS: Play, stop, step, etc.
             UserButtons(
                 onClickPlay = {
-                    viewModel.setState(UserInteractionState.PLAYING)
+                    val selected = uiState.selectedIndices.sorted()
+
+                    // If selection mode is active but nothing is selected do nothing
+                    if (uiState.isSelecting) {
+                        val execList = viewModel.getSelectedExecutionList()
+                        if (execList.isEmpty()) return@UserButtons
+
+                        viewModel.setState(UserInteractionState.PLAYING)
+                        currentPlayJob = coroutineScope.launch {
+                            for ((idx, currentIndex) in execList.withIndex()) {
+                                val currentActionTMP = uiState.actions[currentIndex]
+                                val nextIndex = execList.getOrNull(idx + 1)
+                                executeActionWithCountdown(
+                                    soundContext,
+                                    currentActionTMP,
+                                    index = currentIndex,
+                                    coroutineScope = coroutineScope,
+                                    viewModel = viewModel,
+                                    scrollState = scrollState,
+                                    stepLength = stepDistanceInPixels,
+                                    nextIndex = nextIndex
+                                )
+                            }
+
+                            viewModel.setState(UserInteractionState.STOPPED)
+                        }
+                        return@UserButtons
+                    }
+
+
                     // TODO: avoid this code duplication
+                    viewModel.setState(UserInteractionState.PLAYING)
                     currentPlayJob = coroutineScope.launch {
                         if (currentIndex == uiState.actions.size) {
                             // Scroll to beginning if we are on the last block
@@ -405,6 +481,8 @@ fun SequenceTabPage(
 
                             val task = launch {
                                 executeActionWithCountdown(
+                                    soundContext,               // Context in order to work with sound
+                                    currentAction,  // Save current action in order to check what sound should play
                                     currentIndex,
                                     coroutineScope,
                                     viewModel,
@@ -441,9 +519,11 @@ fun SequenceTabPage(
                                     currentIndex = 0
                                 }.join()
                             }
-
+                            val currentAction = uiState.actions[currentIndex]
                             val task = launch {
                                 executeActionWithCountdown(
+                                    soundContext,
+                                    currentAction,
                                     currentIndex,
                                     coroutineScope,
                                     viewModel,
@@ -493,15 +573,24 @@ fun SequenceTabPage(
  * @param stepLength The distance in pixels that each step should be.
  */
 private suspend fun executeActionWithCountdown(
+    soundContext: Context,
+    currAction: UIAction,
     index: Int,
     coroutineScope: CoroutineScope,
     viewModel: SequenceViewModel,
     scrollState: ScrollState,
     stepLength: Int,
+    nextIndex: Int? = null
 ) {
     val task = coroutineScope.launch {
         // TODO: handle this in a better way, without an if check on index
         // TODO: we shouldn't send actions if they're loop actions
+
+        if (currAction.action.type == RobotActionType.INPUT_SOUND) {
+            val soundName = currAction.action.data  // Saves data of sound block, AKA saves the name of sound file
+            playSound(soundContext, soundName)
+        }
+
         if (index >= 0) {
             viewModel.executeAction(index)
 
@@ -516,8 +605,9 @@ private suspend fun executeActionWithCountdown(
         }
 
         if (viewModel.getState() != UserInteractionState.STOPPED) {
+            val targetIndex = nextIndex ?: index + 1
             animateScrollToIndex(
-                index + 1,
+                targetIndex,
                 scrollState,
                 stepLength,
                 tween(durationMillis = 1000, easing = LinearEasing)
@@ -526,6 +616,28 @@ private suspend fun executeActionWithCountdown(
     }
 
     task.join()
+}
+
+//@Composable
+fun playSound(context:Context, soundName: String) {
+    var isPlayingSound = false
+    robotSounds.forEachIndexed { index, (name, sound) ->
+
+        if (name == soundName) {    // Compare current block sound name to all the names in robotSounds
+            if (!isPlayingSound) {
+                val mediaPlayer = MediaPlayer.create(
+                    context,
+                    sound   // Use the sound from the robotSounds to load the media player
+                )
+                mediaPlayer.start()
+                isPlayingSound = true
+
+                mediaPlayer.setOnCompletionListener {
+                    isPlayingSound = false
+                }
+            }
+        }
+    }
 }
 
 /**

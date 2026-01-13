@@ -1,5 +1,6 @@
 package com.example.aida.ui.component
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.EaseInOut
@@ -53,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.aida.domain.model.IfStatementConditionsType
 import com.example.aida.domain.model.RobotActionType
 import com.example.aida.ui.constants.actionFontsize
 import com.example.aida.ui.popups.PopupGestures
@@ -64,13 +66,17 @@ import com.example.aida.ui.constants.sequenceBarActionHeight
 import com.example.aida.ui.constants.sequenceBarActionPadding
 import com.example.aida.ui.constants.sequenceBarActionWidth
 import com.example.aida.ui.constants.specialActionTextLimit
+import com.example.aida.ui.popups.PopupIf
 import com.example.aida.ui.viewmodel.SequenceBarState
 import com.example.aida.ui.viewmodel.SequenceViewModel
 import com.example.aida.ui.viewmodel.UserInteractionState
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.wrapContentSize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableRow
 import java.util.Locale
+
 
 
 /**
@@ -151,6 +157,16 @@ fun SequenceBar(
                 )
             }
 
+            RobotActionType.IF_START -> {
+                PopupIf(
+                    onDismiss = onDismiss,
+                    onSave = { condition ->
+                        onDismiss()
+                        viewModel.setData(popupState.value.selecetedIndex.value, condition)
+                    }
+                )
+            }
+
             RobotActionType.INPUT_GESTURE -> {
                 PopupGestures(
                     onDismiss = onDismiss,
@@ -216,7 +232,25 @@ fun SequenceBar(
                 visible = true,
                 enter = scaleIn(),
                 exit = scaleOut()
-            ) {
+            )
+            {
+                Box(
+                    modifier = Modifier
+                        .wrapContentSize(Alignment.Center)
+                        .padding(top=20.dp)
+
+                ) {
+                    Text(
+                        text = (index + 1).toString(),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .offset(y = (-25).dp)
+                            .background( color = Color.Black.copy(alpha=0.6f), shape = RoundedCornerShape(size = 4.dp))
+                            .padding(horizontal = 10.dp, vertical = 1.dp) )
+
                 Card(
                     modifier = Modifier
                         .animateContentSize(
@@ -229,8 +263,13 @@ fun SequenceBar(
                         .background(GetActionColor(item.action))
                         .combinedClickable(onDoubleClick = {
                             // Activate popup when double clicking
-                            popupState.value.activate(index)
-                        }) { }
+                            popupState.value.activate(index) },
+                            onClick = {
+                                if (uiState.isSelecting && !uiState.isLocked) {
+                                    viewModel.toggleSelection(index)
+                                }
+                            }
+                            )
                         .semantics {
                             // Accessibility custom actions for moving items left or right
                             customActions = listOf(
@@ -275,7 +314,9 @@ fun SequenceBar(
                             }
                         ),
 
-                    colors = CardDefaults.cardColors(containerColor = GetActionColor(item.action))
+                    colors = CardDefaults.cardColors(containerColor = if (uiState.selectedIndices.contains(index))
+                    Color.Green.copy(alpha = 0.6f)
+                    else GetActionColor(item.action))
                 ) {
                     // Main container inside an action block
                     Box(
@@ -289,8 +330,8 @@ fun SequenceBar(
                             // Display the special action icon and data (e.g., a gesture name)
                             renderSpecialActionButton(item)
 
-                            // If this is a special action (except LOOP END), show a settings button to open popup
-                            if (item.action.type != RobotActionType.LOOP_END) {
+                            // If this is a special action (except LOOP END and IF_END), show a settings button to open popup
+                            if (item.action.type != RobotActionType.LOOP_END && item.action.type != RobotActionType.IF_ELSE && item.action.type != RobotActionType.IF_END) {
                                 IconButton(
                                     onClick = {
                                         popupState.value.activate(index)
@@ -347,6 +388,7 @@ fun SequenceBar(
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
+                    }
                     }
                 }
             }
@@ -437,7 +479,18 @@ private fun renderSpecialActionButton(
                         rotationZ = if (item.action.data == "Finger gun") 90f else 0f
                     )
             )
-            val actionName = if (item.action.data.isEmpty()) appearance.text else item.action.data
+            val actionName : String
+            if (item.action.type == RobotActionType.IF_START && item.action.data != ""){
+                val conditionId = item.action.data
+                    .removeSurrounding("[","]")
+                    .split(",")[0] //The condition type is index 0 and the so far unused condition arg is index 1
+                    .trim()
+                    .toShort()
+                val condition = IfStatementConditionsType.entries.find { it.id == conditionId}
+                actionName = "IF ${condition?.name?.uppercase(Locale.ROOT) ?: "..."}"
+            } else {
+                actionName = if (item.action.data.isEmpty()) appearance.text else item.action.data
+            }
             Text(
                 text = minimizeText(actionName, specialActionTextLimit),
                 color = Color.White,
