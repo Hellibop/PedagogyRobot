@@ -341,6 +341,7 @@ export const useActionStore = create<ActionStoreState>((set, get) => ({
       get().step();
 
       // Schedule the next step after a delay
+      //removed since we use simulatiom which now times itself
       setTimeout(() => {
         playNextStep();
       }, 2000); // Adjust timing as needed

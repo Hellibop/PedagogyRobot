@@ -6,6 +6,7 @@ import { ActionBlockSeqList } from './components/SequenceBar';
 import { useActionStore } from './actionStore';
 import { loadActionsFromStorage } from './dataclasses/Loader';
 import { QrPopup } from './parser_qr/QrPopup';
+import { RobotSimulationOverlay } from './components/RobotSimulationOverlay';
 import {
   DndContext,
   closestCenter,
@@ -41,6 +42,7 @@ function App() {
   const addAction = useActionStore((s) => s.addAction);
   const moveAction = useActionStore((s) => s.moveAction);
   const stop = useActionStore((s) => s.stop);
+
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
@@ -145,7 +147,11 @@ function App() {
         {/* footer including movement and special grids */}
         <div className="h-1/2 w-screen">
           <Footer addBlock={(block) => setSequence([...sequence, block])} />
+          <RobotSimulationOverlay />
         </div>
+
+
+
       </div>
     </DndContext>
   );
