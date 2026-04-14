@@ -20,15 +20,15 @@ const COMMAND_DICT: Record<string, any> = {
   'Input Voice': { type: 'wait', frames: 60 },
 };
 
-export const RobotSimulationOverlay: React.FC = () => {
+// Accept the isSplitScreen prop (defaults to false for Sandbox)
+export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ isSplitScreen = false }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Hook into Zustand
-  const playing = useActionStore((s) => s.playing);
-  const actions = useActionStore((s) => s.actions);
-  const currentIndex = useActionStore((s) => s.currentIndex);
-  const step = useActionStore((s) => s.step);
-  const stop = useActionStore((s) => s.stop);
+  const playing = useActionStore((s: any) => s.playing);
+  const actions = useActionStore((s: any) => s.actions);
+  const currentIndex = useActionStore((s: any) => s.currentIndex);
+  const step = useActionStore((s: any) => s.step);
+  const stop = useActionStore((s: any) => s.stop);
 
   const simState = useRef({
     x: Math.floor(GRID_WIDTH / 2) * CELL_SIZE,
@@ -41,7 +41,7 @@ export const RobotSimulationOverlay: React.FC = () => {
   });
 
   useEffect(() => {
-    if (!playing) return; // Don't run loop if not playing
+    if (!playing) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -76,7 +76,6 @@ export const RobotSimulationOverlay: React.FC = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const state = simState.current;
 
-      // 1. LOAD NEXT INSTRUCTION FROM ZUSTAND
       if (state.stateMachine === 'IDLE' && currentIndex < actions.length && currentIndex !== state.lastProcessedIndex) {
         const actionTitle = actions[currentIndex].action.title;
         const cmdData = COMMAND_DICT[actionTitle];
@@ -84,7 +83,6 @@ export const RobotSimulationOverlay: React.FC = () => {
         state.lastProcessedIndex = currentIndex;
 
         if (!cmdData) {
-          // It's a Loop Start, Loop End, or unknown. Ask Zustand to instantly advance to the next step.
           step();
         } else if (cmdData.type === 'move') {
           state.targetX = state.x + Math.cos(state.angle) * (cmdData.dist * CELL_SIZE);
@@ -99,10 +97,9 @@ export const RobotSimulationOverlay: React.FC = () => {
         }
       }
       else if (state.stateMachine === 'IDLE' && currentIndex >= actions.length) {
-        stop(); // Reached the end, tell Zustand to stop
+        stop();
       }
 
-      // 2. PROCESS MOVEMENT
       if (state.stateMachine === 'EXECUTING_MOVE') {
         const dx = state.targetX - state.x;
         const dy = state.targetY - state.y;
@@ -139,7 +136,6 @@ export const RobotSimulationOverlay: React.FC = () => {
         state.timer--;
         if (state.timer <= 0) {
           state.stateMachine = 'IDLE';
-          // ANIMATION FINISHED! Ask Zustand to calculate the next index (handles loops)
           step();
         }
       }
@@ -152,7 +148,6 @@ export const RobotSimulationOverlay: React.FC = () => {
     return () => cancelAnimationFrame(animationFrameId);
   }, [playing, actions, currentIndex, step, stop]);
 
-  // Reset internal state when stop is pressed
   useEffect(() => {
     if (!playing) {
       simState.current = {
@@ -169,20 +164,50 @@ export const RobotSimulationOverlay: React.FC = () => {
 
   return (
     <div style={{
-      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, // Snaps exactly to the Footer's size
-      backgroundColor: 'rgba(44, 62, 80, 0.95)', zIndex: 1000,
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+      position: isSplitScreen ? 'absolute' : 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      backgroundColor: isSplitScreen ? 'transparent' : 'rgba(44, 62, 80, 0.98)',
+      zIndex: 9999,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center'
     }}>
-      <h2 style={{ color: 'white', marginBottom: '10px', fontSize: '1.2rem' }}>Simulation Running</h2>
+
+      { }
+      {!isSplitScreen && (
+        <button
+          onClick={stop}
+          className="absolute top-6 right-6 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg shadow-xl text-lg transition pointer-events-auto"
+        >
+          ✖ Stop & Close
+        </button>
+      )}
+
+      {/* Only show title in Sandbox mode */}
+      {!isSplitScreen && (
+        <h2 style={{ color: 'white', marginBottom: '20px', fontSize: '2rem', fontWeight: 'bold' }}>
+          Live Simulation
+        </h2>
+      )}
+
       <canvas
         ref={canvasRef}
         width={GRID_WIDTH * CELL_SIZE}
         height={GRID_HEIGHT * CELL_SIZE}
         style={{
-          border: '4px solid #34495e', borderRadius: '8px', backgroundColor: '#ecf0f1',
+          border: '4px solid #34495e',
+          borderRadius: '8px',
+          backgroundColor: '#ecf0f1',
           backgroundImage: 'linear-gradient(#bdc3c7 1px, transparent 1px), linear-gradient(90deg, #bdc3c7 1px, transparent 1px)',
           backgroundSize: `${CELL_SIZE}px ${CELL_SIZE}px`,
-          maxHeight: '80%' // Ensures the canvas doesn't overflow the footer area
+          maxHeight: '80vh',
+          maxWidth: '90vw',
+          objectFit: 'contain',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
         }}
       />
     </div>
