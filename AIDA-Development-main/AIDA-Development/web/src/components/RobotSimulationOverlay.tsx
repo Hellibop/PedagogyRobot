@@ -199,7 +199,7 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
         const MAP_STRETCH_X = 6;
         const MAP_STRETCH_Y = -15;
 
-        const SHOW_DEBUG_GRID = false;
+        const SHOW_DEBUG_GRID = true;
 
         if (mapImageRef.current) {
           ctx.drawImage(
