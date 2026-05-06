@@ -89,36 +89,35 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
     ...getStartPosition(),
     targetX: 0, targetY: 0,
     angle: -Math.PI / 2, targetAngle: -Math.PI / 2,
-    stateMachine: 'INITIAL_WAIT',
+    stateMachine: 'IDLE',
+    nextStateMachine: 'IDLE', // Used to store what to do after PRE_DELAY
     timer: 0,
+    preDelayTimer: 0, // Separate timer to not overwrite wait command data
     lastProcessedIndex: -1,
-    forceStop: false // New flag to signal the loop to close down
+    forceStop: false, // New flag to signal the loop to close down
+    hasStarted: false // Flag to track if we've done our initial delay
   });
 
-  // --- NEW STUFF: Delay before Sandbox Simulation ---
+  // --- NEW STUFF: Delay is now handled internally inside the canvas loop ---
   useEffect(() => {
     if (playing && !prevPlaying.current) {
       // Just turned ON
       setIsVisible(true);
-      // Force reset when hitting play to ensure the INITIAL_WAIT state is set
+      // Force reset when hitting play. Notice we start immediately at 'IDLE' to catch the index!
       simState.current = {
         ...getStartPosition(),
         targetX: 0, targetY: 0,
         angle: -Math.PI / 2, targetAngle: -Math.PI / 2,
-        stateMachine: isSplitScreen ? 'IDLE' : 'INITIAL_WAIT',
+        stateMachine: 'IDLE',
+        nextStateMachine: 'IDLE',
         timer: 0,
+        preDelayTimer: 0,
         lastProcessedIndex: -1,
-        forceStop: false
+        forceStop: false,
+        hasStarted: isSplitScreen ? true : false // If splitscreen, skip the delay entirely
       };
-
-      if (!isSplitScreen) {
-        const timeout = setTimeout(() => {
-          simState.current.stateMachine = 'IDLE';
-        }, 1000);
-        return () => clearTimeout(timeout);
-      }
     } else if (!playing && prevPlaying.current) {
-      // Just turned OFF - Let the loop finish gracefully, did not work well with delay in beginning since it will check with zustand on next to last if done or not, would skip
+      // Just turned OFF - Let the loop finish gracefully
       simState.current.forceStop = true;
     }
 
@@ -142,7 +141,7 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
   useEffect(() => {
     if (!mapLoaded) return;
 
-    // THIS IS THE FIX: In SplitScreen, don't care about isVisible, always run the loop!
+    // In SplitScreen, don't care about isVisible, always run the loop!
     // In Sandbox, we wait until isVisible becomes true to render anything.
     if (!isSplitScreen && !isVisible) return;
 
@@ -157,7 +156,6 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
 
     const drawRobot = (x: number, y: number, angle: number) => {
       if (!ctx) return;
-      // --- NEW STUFF: Use currentCellWidth/Height instead of hardcoded CELL_WIDTH/HEIGHT ---
       const offsetX = currentCellWidth / 2;
       const offsetY = currentCellHeight / 2;
 
@@ -193,13 +191,12 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (isSplitScreen) {
-        // --- NEW STUFF: CHALLENGE MODE MAP RENDERING ---
         const MAP_OFFSET_X = 0;
         const MAP_OFFSET_Y = 16 + 5;
         const MAP_STRETCH_X = 6;
         const MAP_STRETCH_Y = -15;
 
-        const SHOW_DEBUG_GRID = true;
+        const SHOW_DEBUG_GRID = false;
 
         if (mapImageRef.current) {
           ctx.drawImage(
@@ -211,7 +208,6 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
           );
         }
 
-        // Draw the Debug Grid using the new non-square rectangular cells
         if (SHOW_DEBUG_GRID) {
           ctx.strokeStyle = 'rgba(255, 0, 0, 0.4)';
           ctx.lineWidth = 1;
@@ -219,7 +215,6 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
           for (let i = 0; i < canvas.height; i += CELL_HEIGHT) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke(); }
         }
       } else {
-        // --- NEW STUFF: SANDBOX MODE RENDERING (Dots background) ---
         ctx.fillStyle = '#ecf0f1';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -237,21 +232,22 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
 
       if (state.stateMachine === 'IDLE') {
         if (state.forceStop) {
-          // Zustand store stopped playing, and the robot is finally done animating.
           setIsVisible(false);
-          state.forceStop = false; // Reset the flag so we don't keep firing it
+          state.forceStop = false;
 
           if (!isSplitScreen) {
-            return; // Stop animation loop completely ONLY in sandbox mode
+            return;
           } else {
-            // In splitscreen, immediately snap back to start position and wait for next sequence
             Object.assign(state, {
               ...getStartPosition(),
               targetX: 0, targetY: 0,
               angle: -Math.PI / 2, targetAngle: -Math.PI / 2,
-              stateMachine: 'INITIAL_WAIT',
+              stateMachine: 'IDLE',
+              nextStateMachine: 'IDLE',
               timer: 0,
-              lastProcessedIndex: -1
+              preDelayTimer: 0,
+              lastProcessedIndex: -1,
+              hasStarted: true // Resetting after finish skips delay
             });
           }
         } else if (currentIndex < actions.length && currentIndex !== state.lastProcessedIndex) {
@@ -259,36 +255,53 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
           const cmdData = COMMAND_DICT[actionTitle];
           state.lastProcessedIndex = currentIndex;
 
+          let nextState = 'IDLE';
+
           if (!cmdData) {
             step();
           } else if (cmdData.type === 'move') {
-            // Apply distinct width/height calculations
             const intendedX = Math.round((state.x + Math.cos(state.angle) * (cmdData.dist * currentCellWidth)) / currentCellWidth);
             const intendedY = Math.round((state.y + Math.sin(state.angle) * (cmdData.dist * currentCellHeight)) / currentCellHeight);
 
             if (isWalkable(intendedX, intendedY)) {
               state.targetX = intendedX * currentCellWidth;
               state.targetY = intendedY * currentCellHeight;
-              state.stateMachine = 'EXECUTING_MOVE';
+              nextState = 'EXECUTING_MOVE';
             } else {
               console.warn("Hit a wall! Waiting in place.");
               state.timer = PAUSE_FRAMES;
-              state.stateMachine = 'POST_DELAY';
+              nextState = 'POST_DELAY';
             }
           } else if (cmdData.type === 'turn') {
             state.targetAngle = state.angle + cmdData.angle;
-            state.stateMachine = 'EXECUTING_TURN';
+            nextState = 'EXECUTING_TURN';
           } else if (cmdData.type === 'wait') {
             state.timer = cmdData.frames;
-            state.stateMachine = 'EXECUTING_WAIT';
+            nextState = 'EXECUTING_WAIT';
+          }
+
+          // FIX: Apply our 1-second visual delay directly within the loop on the very first run!
+          if (!state.hasStarted && !isSplitScreen && nextState !== 'IDLE') {
+            state.hasStarted = true;
+            state.stateMachine = 'PRE_DELAY';
+            state.nextStateMachine = nextState;
+            state.preDelayTimer = 60; // 60 frames = ~1 sec at 60fps
+          } else if (nextState !== 'IDLE') {
+            state.stateMachine = nextState;
           }
         } else if (currentIndex >= actions.length) {
-          // If we run out of actions, inform Zustand to turn 'playing' to false
           stop();
         }
       }
 
-      if (state.stateMachine === 'EXECUTING_MOVE') {
+      // NEW PRE_DELAY STATE
+      if (state.stateMachine === 'PRE_DELAY') {
+        state.preDelayTimer--;
+        if (state.preDelayTimer <= 0) {
+          state.stateMachine = state.nextStateMachine;
+        }
+      }
+      else if (state.stateMachine === 'EXECUTING_MOVE') {
         const dx = state.targetX - state.x;
         const dy = state.targetY - state.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
