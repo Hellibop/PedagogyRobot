@@ -79,7 +79,7 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
   // --- NEW STUFF: Dynamic Start Coordinates based on mode ---
   const getStartPosition = () => {
     if (isSplitScreen) {
-      return { x: 2 * CELL_WIDTH, y: 21 * CELL_HEIGHT };
+      return { x: 1 * CELL_WIDTH, y: 21 * CELL_HEIGHT };
     } else {
       return { x: Math.floor(15 / 2) * SANDBOX_CELL_SIZE, y: Math.floor(15 / 2) * SANDBOX_CELL_SIZE };
     }
