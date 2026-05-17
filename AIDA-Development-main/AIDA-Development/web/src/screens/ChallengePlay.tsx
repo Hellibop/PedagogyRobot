@@ -3,6 +3,7 @@ import { useActionStore } from '../actionStore';
 import { ActionBlockSeqList } from '../components/SequenceBar';
 import Footer from '../components/Footer';
 import { RobotSimulationOverlay } from '../components/RobotSimulationOverlay';
+import ClearButton from '../components/ClearButton';
 
 export default function ChallengePlay() {
   const setScreen = useActionStore((s: any) => s.setScreen);
@@ -26,15 +27,21 @@ export default function ChallengePlay() {
             </button>
             <h2 className="text-xl font-bold truncate">{activeChallenge?.title}</h2>
           </div>
-          <span className="text-gray-300 text-sm">Challenge Mode</span>
+          <span className="text-gray-300 text-sm hidden sm:inline">Challenge Mode</span>
         </div>
 
-        {/* Sequence Area (Takes up remaining middle space, but guaranteed at least 200px tall) */}
-        <div className="flex-1 p-4 overflow-auto bg-gray-50 relative min-h-[200px]">
+        {/* Sequence Area (Takes up remaining middle space, guaranteed at least 200px tall) */}
+        <div className="flex-1 p-4 overflow-auto bg-gray-50 relative min-h-[200px] flex flex-col">
+          
+          {/* Sequence Toolbar: Clear Button placed here */}
+          <div className="mb-4 flex justify-start">
+            <ClearButton />
+          </div>
+
           <ActionBlockSeqList />
         </div>
 
-        {/* Footer Blocks (Pinned to bottom, restricted to 45% of screen height so it never eats the Sequence area) */}
+        {/* Footer Blocks (Pinned to bottom, restricted to 45% of screen height) */}
         <div className="border-t border-gray-200 shrink-0 overflow-y-auto max-h-[45vh]">
           <Footer addBlock={(block) => addAction(block)} />
         </div>
@@ -43,7 +50,6 @@ export default function ChallengePlay() {
 
       {/* Right Half: The Canvas Map */}
       <div className="w-1/2 relative bg-[#2c3e50] flex flex-col items-center justify-center p-4">
-        {/* By wrapping the Overlay in this relative div, it will only fill the right half of the screen! */}
         <div className="relative w-full h-full border-4 border-gray-700 rounded-xl overflow-hidden bg-white shadow-2xl">
           <RobotSimulationOverlay isSplitScreen={true} />
         </div>
