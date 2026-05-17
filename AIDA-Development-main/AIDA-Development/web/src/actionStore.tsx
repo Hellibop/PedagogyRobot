@@ -26,6 +26,8 @@ interface ActionStoreState {
   loopStartIndex: number;
   isInLoop: boolean;
   iterations: number;
+  currentScreen: string;
+  activeChallenge: any;
 
   // Actions (methods)
   setScrollRef: (scrollRef: React.RefObject<HTMLDivElement>) => void;
@@ -40,6 +42,8 @@ interface ActionStoreState {
   step: () => void;
   play: () => void;
   stop: () => void;
+
+
 }
 type State = { actions: [], currentindex: 0, totalTime: 0, currentIndex: 0, loopStartIndex: 0, isInLoop: false, iterations: 0 };
 const emptyList: State = { actions: [], currentindex: 0, totalTime: 0, currentIndex: 0, loopStartIndex: 0, isInLoop: false, iterations: 0 };
@@ -54,8 +58,17 @@ export const useActionStore = create<ActionStoreState>((set, get) => ({
   loopStartIndex: -1,
   isInLoop: false,
   iterations: -1,
+  //added for challenges
+  currentScreen: 'sandbox', // 'sandbox' | 'challenge-list' | 'challenge-info' | 'challenge-play'
+  activeChallenge: null,
 
   setScrollRef: (ref: React.RefObject<HTMLDivElement>) => set({ scrollRef: ref }),
+
+  //added asweell for challenges
+  setScreen: (screenName: string, challengeData: any = null) => set({
+    currentScreen: screenName,
+    ...(challengeData !== null && { activeChallenge: challengeData })
+  }),
 
   addAction: (action: BaseAction) => {
     set((state) => ({
@@ -341,6 +354,7 @@ export const useActionStore = create<ActionStoreState>((set, get) => ({
       get().step();
 
       // Schedule the next step after a delay
+      //removed since we use simulatiom which now times itself
       setTimeout(() => {
         playNextStep();
       }, 2000); // Adjust timing as needed
