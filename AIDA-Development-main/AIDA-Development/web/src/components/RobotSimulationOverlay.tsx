@@ -2,18 +2,22 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useActionStore } from '../actionStore';
 import mapBackgroundImage from './map_background.jpg';
 
+
 // Use separate width and height to fix the image's non-square aspect ratio
 const CELL_WIDTH = 39;
 const CELL_HEIGHT = 37.7;
 const GRID_WIDTH = 21;
 const GRID_HEIGHT = 30;
 
+
 // --- NEW STUFF: Sandbox Mode variables (No map, pure pixels) ---
 const SANDBOX_CELL_SIZE = 40;
+
 
 const SPEED = 2;
 const TURN_SPEED = 0.05;
 const PAUSE_FRAMES = 40;
+
 
 const COMMAND_DICT: Record<string, any> = {
   'Forward': { type: 'move', dist: 1 },
@@ -26,6 +30,7 @@ const COMMAND_DICT: Record<string, any> = {
   'Input Sound': { type: 'wait', frames: 60 },
   'Input Voice': { type: 'wait', frames: 60 },
 };
+
 
 const COLLISION_GRID = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -60,8 +65,10 @@ const COLLISION_GRID = [
   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 ];
 
+
 export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ isSplitScreen = false }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
 
   const playing = useActionStore((s: any) => s.playing);
   const actions = useActionStore((s: any) => s.actions);
@@ -69,12 +76,15 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
   const step = useActionStore((s: any) => s.step);
   const stop = useActionStore((s: any) => s.stop);
 
+
   const [mapLoaded, setMapLoaded] = useState(false);
   const mapImageRef = useRef<HTMLImageElement | null>(null);
+
 
   // We manage visibility internally to allow the robot to finish animating before closing
   const [isVisible, setIsVisible] = useState(false);
   const prevPlaying = useRef(playing);
+
 
   // --- NEW STUFF: Dynamic Start Coordinates based on mode ---
   const getStartPosition = () => {
@@ -84,6 +94,7 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
       return { x: Math.floor(15 / 2) * SANDBOX_CELL_SIZE, y: Math.floor(15 / 2) * SANDBOX_CELL_SIZE };
     }
   };
+
 
   const simState = useRef({
     ...getStartPosition(),
@@ -97,6 +108,7 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
     forceStop: false, // New flag to signal the loop to close down
     hasStarted: false // Flag to track if we've done our initial delay
   });
+
 
   // --- NEW STUFF: Delay is now handled internally inside the canvas loop ---
   useEffect(() => {
@@ -118,11 +130,13 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
       };
     } else if (!playing && prevPlaying.current) {
       // Just turned OFF - Let the loop finish gracefully
-      simState.current.forceStop = true;
+      // simState.current.forceStop = true; // <-- COMMENTED OUT: Never force stop automatically
     }
+
 
     prevPlaying.current = playing;
   }, [playing, isSplitScreen]);
+
 
   useEffect(() => {
     // --- NEW STUFF: Only load the map image if we are in Challenge Mode ---
@@ -138,30 +152,37 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
     }
   }, [isSplitScreen]);
 
+
   useEffect(() => {
     if (!mapLoaded) return;
+
 
     // In SplitScreen, don't care about isVisible, always run the loop!
     // In Sandbox, we wait until isVisible becomes true to render anything.
     if (!isSplitScreen && !isVisible) return;
+
 
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let animationFrameId: number;
 
+
     // --- NEW STUFF: Use current cell sizes based on mode ---
     const currentCellWidth = isSplitScreen ? CELL_WIDTH : SANDBOX_CELL_SIZE;
     const currentCellHeight = isSplitScreen ? CELL_HEIGHT : SANDBOX_CELL_SIZE;
+
 
     const drawRobot = (x: number, y: number, angle: number) => {
       if (!ctx) return;
       const offsetX = currentCellWidth / 2;
       const offsetY = currentCellHeight / 2;
 
+
       ctx.save();
       ctx.translate(x + offsetX, y + offsetY);
       ctx.rotate(angle);
+
 
       ctx.fillStyle = '#7f8c8d';
       ctx.fillRect(-16, -18, 32, 8);
@@ -178,17 +199,21 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
       ctx.restore();
     };
 
+
     const isWalkable = (gridX: number, gridY: number) => {
       // --- NEW STUFF: In Sandbox mode, everything is walkable, No walls. ---
       if (!isSplitScreen) return true;
+
 
       if (gridY < 0 || gridY >= GRID_HEIGHT || gridX < 0 || gridX >= GRID_WIDTH) return false;
       return COLLISION_GRID[gridY][gridX] === 1;
     };
 
+
     const loop = () => {
       if (!ctx || !canvas) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
 
       if (isSplitScreen) {
         const MAP_OFFSET_X = 0;
@@ -196,7 +221,9 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
         const MAP_STRETCH_X = 6;
         const MAP_STRETCH_Y = -15;
 
+
         const SHOW_DEBUG_GRID = false;
+
 
         if (mapImageRef.current) {
           ctx.drawImage(
@@ -208,6 +235,7 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
           );
         }
 
+
         if (SHOW_DEBUG_GRID) {
           ctx.strokeStyle = 'rgba(255, 0, 0, 0.4)';
           ctx.lineWidth = 1;
@@ -217,6 +245,7 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
       } else {
         ctx.fillStyle = '#ecf0f1';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
 
         ctx.fillStyle = '#bdc3c7';
         for (let x = 0; x < canvas.width; x += SANDBOX_CELL_SIZE) {
@@ -228,15 +257,18 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
         }
       }
 
+
       const state = simState.current;
+
 
       if (state.stateMachine === 'IDLE') {
         if (state.forceStop) {
-          setIsVisible(false);
+          // setIsVisible(false); // <-- COMMENTED OUT so it doesn't auto-close
           state.forceStop = false;
 
+
           if (!isSplitScreen) {
-            return;
+            // return; // <-- COMMENTED OUT so the loop keeps rendering the final frame
           } else {
             Object.assign(state, {
               ...getStartPosition(),
@@ -255,13 +287,16 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
           const cmdData = COMMAND_DICT[actionTitle];
           state.lastProcessedIndex = currentIndex;
 
+
           let nextState = 'IDLE';
+
 
           if (!cmdData) {
             step();
           } else if (cmdData.type === 'move') {
             const intendedX = Math.round((state.x + Math.cos(state.angle) * (cmdData.dist * currentCellWidth)) / currentCellWidth);
             const intendedY = Math.round((state.y + Math.sin(state.angle) * (cmdData.dist * currentCellHeight)) / currentCellHeight);
+
 
             if (isWalkable(intendedX, intendedY)) {
               state.targetX = intendedX * currentCellWidth;
@@ -280,6 +315,7 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
             nextState = 'EXECUTING_WAIT';
           }
 
+
           // FIX: Apply our 1-second visual delay directly within the loop on the very first run!
           if (!state.hasStarted && !isSplitScreen && nextState !== 'IDLE') {
             state.hasStarted = true;
@@ -290,9 +326,13 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
             state.stateMachine = nextState;
           }
         } else if (currentIndex >= actions.length) {
-          stop();
+          // FIX: Wait for the final command to finish visually before calling stop()
+          if (state.lastProcessedIndex === actions.length - 1) {
+            stop();
+          }
         }
       }
+
 
       // NEW PRE_DELAY STATE
       if (state.stateMachine === 'PRE_DELAY') {
@@ -305,6 +345,7 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
         const dx = state.targetX - state.x;
         const dy = state.targetY - state.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
+
 
         if (dist < SPEED) {
           state.x = state.targetX; state.y = state.targetY;
@@ -334,16 +375,21 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
         }
       }
 
+
       drawRobot(state.x, state.y, state.angle);
+
 
       animationFrameId = requestAnimationFrame(loop);
     };
+
 
     loop();
     return () => cancelAnimationFrame(animationFrameId);
   }, [isVisible, mapLoaded, actions, currentIndex, step, stop, isSplitScreen]);
 
+
   if (!isSplitScreen && !isVisible) return null;
+
 
   return (
     <div style={{
@@ -357,6 +403,7 @@ export const RobotSimulationOverlay: React.FC<{ isSplitScreen?: boolean }> = ({ 
           ✖ Stop & Close
         </button>
       )}
+
 
       {!mapLoaded ? (
         <h2 style={{ color: 'white' }}>Loading Map...</h2>
